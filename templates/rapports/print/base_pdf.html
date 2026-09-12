@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>{% block titre %}Fiche ARGILE{% endblock %}</title>
+<style>
+    @page {
+        size: A4;
+        margin: 1.4cm;
+    }
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #23331f;
+        font-size: 11px;
+        margin: 0;
+    }
+    .entete-societe {
+        display: table;
+        width: 100%;
+        border: 2px solid #1e4d2b;
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        text-align: center;
+        color: #1e4d2b;
+        font-weight: bold;
+        font-size: 13px;
+        background-color: #e6f4ea;
+    }
+    .entete-societe img.logo-ferme {
+        height: 42px;
+        vertical-align: middle;
+        margin-right: 10px;
+        border-radius: 50%;
+    }
+    .entete-societe .sous-titre {
+        font-weight: normal;
+        font-size: 9px;
+        color: #2f7a3f;
+    }
+    .titre-fiche {
+        text-align: center;
+        background-color: #2f7a3f;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 13px;
+        padding: 7px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    table.fiche {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 14px;
+    }
+    table.fiche th,
+    table.fiche td {
+        border: 1px solid #1e4d2b;
+        padding: 5px;
+        text-align: center;
+        font-size: 10px;
+        vertical-align: middle;
+    }
+    table.fiche th {
+        background-color: #e6f4ea;
+        color: #1e4d2b;
+        font-weight: bold;
+    }
+    table.fiche td.libelle {
+        background-color: #f7f5ef;
+        font-weight: bold;
+        text-align: left;
+        width: 28%;
+    }
+    .bloc-signature {
+        width: 100%;
+        margin-top: 30px;
+    }
+    .bloc-signature td {
+        width: 50%;
+        vertical-align: top;
+        padding-top: 30px;
+        font-size: 10px;
+        border-top: 1px solid #6b4f2a;
+    }
+    .pied-page {
+        text-align: center;
+        font-size: 8.5px;
+        color: #6b4f2a;
+        margin-top: 24px;
+        border-top: 1px solid #cfe3d2;
+        padding-top: 6px;
+    }
+    .barre-actions {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+    .barre-actions a, .barre-actions button {
+        display: inline-block;
+        background-color: #2f7a3f;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 18px;
+        margin: 0 4px;
+        font-size: 13px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .barre-actions a.secondaire {
+        background-color: #6b4f2a;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        body { margin: 0; }
+    }
+</style>
+{% block extra_style %}{% endblock %}
+</head>
+<body>
+
+{% block barre_actions %}{% endblock %}
+
+<div class="entete-societe">
+    {% if exploitation.logo %}
+        <img src="{{ exploitation.logo.url }}" alt="Logo" class="logo-ferme">
+    {% endif %}
+    {{ exploitation.nom|default:"Essemvo Afrique — La Mémoire du Fermier" }}
+    {% if exploitation.localisation %} — {{ exploitation.localisation }}{% endif %}
+    <div class="sous-titre">Document généré via ARGILE — ESSEMVO AFRIQUE, Bp 79 Man, Côte d'Ivoire</div>
+</div>
+
+{% block contenu_fiche %}{% endblock %}
+
+<div class="pied-page">
+    Document généré par ARGILE — {{ exploitation.nom|default:"" }} — imprimé le {% now "d/m/Y à H:i" %}
+</div>
+
+</body>
+</html>

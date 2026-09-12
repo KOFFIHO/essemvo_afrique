@@ -1,0 +1,45 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Vaccination — eau de boisson{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-droplet"></i> Vaccination en eau de boisson</h2>
+    <a href="{% url 'vaccination_eau_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Nouvelle fiche</a>
+</div>
+
+{% url 'vaccination_eau_liste_imprimer' as url_imprimer %}
+{% url 'vaccination_eau_liste_pdf' as url_pdf %}
+{% include "rapports/_filtre_periode.html" %}
+
+<div class="card card-argile">
+    <div class="table-responsive">
+        <table class="table table-argile mb-0">
+            <thead>
+                <tr>
+                    <th>N°</th><th>Date</th><th>Âge sujets</th><th>Nb sujets</th>
+                    <th>Vaccin</th><th>Type d'eau</th><th>Validité</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for f in fiches %}
+                <tr>
+                    <td>{{ f.numero_fiche }}</td>
+                    <td>{{ f.date|date:"d/m/Y" }}</td>
+                    <td>{{ f.age_sujets }}</td>
+                    <td>{{ f.nombre_sujets }}</td>
+                    <td>{{ f.vaccin_utilise }}</td>
+                    <td><span class="badge badge-argile">{{ f.get_type_eau_utilisee_display }}</span></td>
+                    <td>{{ f.date_validite_vaccin|date:"d/m/Y" }}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'vaccination_eau_detail' f.pk %}" class="btn btn-sm btn-outline-argile"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'vaccination_eau_update' f.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'vaccination_eau_delete' f.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Aucune fiche enregistrée.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

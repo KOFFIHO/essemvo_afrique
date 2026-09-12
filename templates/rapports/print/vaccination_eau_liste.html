@@ -1,0 +1,36 @@
+{% extends "rapports/print/base_pdf.html" %}
+{% block titre %}Historique — vaccination eau de boisson{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+</div>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">HISTORIQUE — VACCINATION EN EAU DE BOISSON</div>
+
+<table class="fiche">
+    <thead>
+        <tr>
+            <th>N°</th><th>Date</th><th>Âge sujets</th><th>Nb sujets</th>
+            <th>Vaccin</th><th>Type d'eau</th><th>Validité</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for f in fiches %}
+        <tr>
+            <td>{{ f.numero_fiche }}</td>
+            <td>{{ f.date|date:"d/m/Y" }}</td>
+            <td>{{ f.age_sujets }}</td>
+            <td>{{ f.nombre_sujets }}</td>
+            <td>{{ f.vaccin_utilise }}</td>
+            <td>{{ f.get_type_eau_utilisee_display }}</td>
+            <td>{{ f.date_validite_vaccin|date:"d/m/Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">Aucune fiche pour la période sélectionnée.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

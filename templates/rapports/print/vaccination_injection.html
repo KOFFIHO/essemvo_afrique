@@ -1,0 +1,76 @@
+{% extends "rapports/print/base_pdf.html" %}
+
+{% block titre %}Fiche injection n°{{ fiche.numero_fiche }}{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <a href="{% url 'vaccination_injection_pdf' fiche.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
+</div>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">
+    FICHE DE RAPPORT DE VACCINATION &nbsp;~&nbsp; Injection &nbsp;~&nbsp; N°{{ fiche.numero_fiche }}
+</div>
+
+<table class="fiche">
+    <thead>
+        <tr>
+            <th rowspan="2">DATE<br>ÂGE DES SUJETS</th>
+            <th rowspan="2">NOMBRE<br>DE SUJETS</th>
+            <th rowspan="2">NOMBRE<br>DE DOSES<br>UTILISÉ</th>
+            <th colspan="3">PRÉPARATION</th>
+            <th colspan="2">ADMINISTRATION<br>Injection</th>
+            <th rowspan="2">DATE DE<br>VALIDITÉ<br>DU VACCIN</th>
+        </tr>
+        <tr>
+            <th>QUANTITÉ DU<br>PRODUIT (ml)</th>
+            <th>NOM DU<br>VACCIN</th>
+            <th>PRODUIT<br>COMPLÉMENTAIRE<br>UTILISÉ</th>
+            <th>HEURE<br>DE DÉBUT</th>
+            <th>HEURE<br>DE FIN</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ fiche.date|date:"d/m/Y" }}<br>{{ fiche.age_sujets }}</td>
+            <td>{{ fiche.nombre_sujets }}</td>
+            <td>{{ fiche.nombre_doses_utilise }}</td>
+            <td>{{ fiche.quantite_produit_ml }}</td>
+            <td>{{ fiche.nom_vaccin|default:"—" }}</td>
+            <td>{{ fiche.produit_complementaire|default:"—" }}</td>
+            <td>{{ fiche.heure_debut|time:"H:i" }}</td>
+            <td>{{ fiche.heure_fin|time:"H:i" }}</td>
+            <td>{{ fiche.date_validite_vaccin|date:"d/m/Y" }}</td>
+        </tr>
+    </tbody>
+</table>
+
+{% if fiche.image_etiquette %}
+<table class="fiche">
+    <tr>
+        <td class="libelle">IMAGE ÉTIQUETTE<br>DU VACCIN</td>
+        <td style="text-align:center;">
+            <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" style="max-height:160px; max-width:260px;">
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+{% if fiche.observations %}
+<table class="fiche">
+    <tr>
+        <td class="libelle">OBSERVATIONS</td>
+        <td style="text-align:left;">{{ fiche.observations }}</td>
+    </tr>
+</table>
+{% endif %}
+
+<table class="bloc-signature">
+    <tr>
+        <td>Visa de l'agent</td>
+        <td>Visa du responsable d'élevage</td>
+    </tr>
+</table>
+{% endblock %}

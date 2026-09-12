@@ -1,0 +1,41 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Pesée des œufs{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-egg"></i> Pesée quotidienne des œufs</h2>
+    <a href="{% url 'pesee_oeufs_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Nouvelle pesée</a>
+</div>
+
+{% url 'pesee_oeufs_imprimer' as url_imprimer %}
+{% url 'pesee_oeufs_pdf' as url_pdf %}
+{% include "rapports/_filtre_periode.html" %}
+
+<div class="card card-argile card-jaune">
+    <div class="table-responsive">
+        <table class="table table-argile mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th><th>Heure</th><th>Œufs pesés</th>
+                    <th>Poids total (g)</th><th>Poids moyen / œuf</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in pesees %}
+                <tr>
+                    <td>{{ p.date|date:"d/m/Y" }}</td>
+                    <td>{{ p.heure_pesee }}</td>
+                    <td>{{ p.nombre_oeufs_peses }}</td>
+                    <td>{{ p.poids_total_grammes }}</td>
+                    <td><span class="badge badge-jaune">{{ p.poids_moyen_oeuf }} g</span></td>
+                    <td>
+                        <a href="{% url 'pesee_oeufs_delete' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Aucune pesée enregistrée.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

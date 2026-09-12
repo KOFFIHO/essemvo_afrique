@@ -1,0 +1,52 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Fiche n°{{ fiche.numero_fiche }}{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-droplet"></i> Fiche eau de boisson n°{{ fiche.numero_fiche }}</h2>
+    <div>
+        <a href="{% url 'vaccination_eau_imprimer' fiche.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
+        <a href="{% url 'vaccination_eau_pdf' fiche.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'vaccination_eau_update' fiche.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'vaccination_eau_delete' fiche.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
+    </div>
+</div>
+
+<div class="card card-argile p-4">
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Date :</strong> {{ fiche.date|date:"d/m/Y" }}</p>
+            <p><strong>Âge des sujets :</strong> {{ fiche.age_sujets }}</p>
+            <p><strong>Nombre de sujets :</strong> {{ fiche.nombre_sujets }}</p>
+            <p><strong>Nombre de doses utilisées :</strong> {{ fiche.nombre_doses_utilise }}</p>
+            <p><strong>Vaccin utilisé :</strong> {{ fiche.vaccin_utilise }}</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Type d'eau :</strong> {{ fiche.get_type_eau_utilisee_display }}</p>
+            <p><strong>Quantité initiale :</strong> {{ fiche.quantite_eau_initiale }} L</p>
+            <p><strong>Quantité restante :</strong> {{ fiche.quantite_eau_reste }} L</p>
+            <p><strong>Quantité consommée :</strong> {{ fiche.quantite_eau_consommee }} L</p>
+            <p><strong>Date de validité du vaccin :</strong> {{ fiche.date_validite_vaccin|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Assoiffement :</strong> {{ fiche.heure_assoiffement_debut }} → {{ fiche.heure_assoiffement_fin }}</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Abreuvement :</strong> {{ fiche.heure_abreuvement_debut }} → {{ fiche.heure_abreuvement_fin }}</p>
+        </div>
+    </div>
+    {% if fiche.observations %}
+    <hr>
+    <p><strong>Observations :</strong> {{ fiche.observations }}</p>
+    {% endif %}
+    {% if fiche.image_etiquette %}
+    <hr>
+    <p class="mb-2"><strong>Image étiquette du vaccin :</strong></p>
+    <a href="{{ fiche.image_etiquette.url }}" target="_blank">
+        <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" class="img-thumbnail" style="max-width: 260px;">
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

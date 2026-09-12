@@ -1,0 +1,92 @@
+{% extends "rapports/base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<div class="d-flex align-items-center gap-2 mb-3">
+    <h2 class="mb-0"><i class="bi bi-capsule"></i> {{ titre }}</h2>
+    {% if fiche %}<span class="badge badge-terre fs-6">N° {{ fiche.numero_fiche }}</span>{% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset class="fieldset-argile">
+        <legend>Identification</legend>
+        <p class="text-muted small mb-3">
+            <i class="bi bi-info-circle"></i> Le N° de fiche est attribué automatiquement à l'enregistrement.
+        </p>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ form.date.label }}</label>
+                {{ form.date }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ form.age_sujets.label }}</label>
+                {{ form.age_sujets }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ form.nombre_sujets.label }}</label>
+                {{ form.nombre_sujets }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Préparation</legend>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">{{ form.nombre_doses_utilise.label }}</label>
+                {{ form.nombre_doses_utilise }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.quantite_produit_ml.label }}</label>
+                {{ form.quantite_produit_ml }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.nom_vaccin.label }}</label>
+                {{ form.nom_vaccin }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.produit_complementaire.label }}</label>
+                {{ form.produit_complementaire }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">{{ form.image_etiquette.label }}</label>
+                {{ form.image_etiquette }}
+                {% if form.instance.image_etiquette %}
+                    <div class="form-text">Actuelle : <a href="{{ form.instance.image_etiquette.url }}" target="_blank">voir l'image</a></div>
+                {% endif %}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Administration — Injection</legend>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">{{ form.heure_debut.label }}</label>
+                {{ form.heure_debut }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">{{ form.heure_fin.label }}</label>
+                {{ form.heure_fin }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Traçabilité</legend>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ form.date_validite_vaccin.label }}</label>
+                {{ form.date_validite_vaccin }}
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">{{ form.observations.label }}</label>
+                {{ form.observations }}
+            </div>
+        </div>
+    </fieldset>
+
+    <button type="submit" class="btn btn-argile"><i class="bi bi-check-circle"></i> Enregistrer</button>
+    <a href="{% url 'vaccination_injection_list' %}" class="btn btn-outline-secondary">Annuler</a>
+</form>
+{% endblock %}

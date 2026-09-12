@@ -1,0 +1,51 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Poids hebdomadaire{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-graph-up"></i> Poids moyen hebdomadaire visé</h2>
+    <a href="{% url 'poids_semaine_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Nouvelle semaine</a>
+</div>
+
+{% url 'poids_semaine_liste_imprimer' as url_imprimer %}
+{% url 'poids_semaine_liste_pdf' as url_pdf %}
+{% include "rapports/_filtre_periode.html" %}
+
+<div class="card card-argile">
+    <div class="table-responsive">
+        <table class="table table-argile mb-0">
+            <thead>
+                <tr>
+                    <th>Semaine n°</th><th>Date</th><th>Aliment utilisé</th>
+                    <th>Poids visé (g)</th><th>Fourchette</th><th>Poids réel moyen</th><th>Sujets pesés</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in semaines %}
+                <tr>
+                    <td>{{ s.semaine_numero }}</td>
+                    <td>{{ s.date|date:"d/m/Y" }}</td>
+                    <td>{{ s.aliment_utilise }}</td>
+                    <td>{{ s.poids_moyen_vise }} g</td>
+                    <td>{{ s.fourchette_affichage|default:"—" }}</td>
+                    <td>
+                        {% if s.poids_moyen_reel %}
+                            <span class="badge badge-argile">{{ s.poids_moyen_reel }} g</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ s.nombre_poussins_peses }}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'poids_semaine_detail' s.pk %}" class="btn btn-sm btn-outline-argile"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'poids_semaine_update' s.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'poids_semaine_delete' s.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Aucune semaine enregistrée.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

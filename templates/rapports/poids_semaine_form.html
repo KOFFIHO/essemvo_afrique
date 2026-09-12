@@ -1,0 +1,156 @@
+{% extends "rapports/base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<h2 class="mb-3"><i class="bi bi-graph-up"></i> {{ titre }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <fieldset class="fieldset-argile">
+        <legend>En-tête de la semaine</legend>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">{{ form.semaine_numero.label }}</label>
+                {{ form.semaine_numero }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.date.label }}</label>
+                {{ form.date }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.aliment_utilise.label }}</label>
+                {{ form.aliment_utilise }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.poids_moyen_vise.label }}</label>
+                {{ form.poids_moyen_vise }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.fourchette_min.label }}</label>
+                {{ form.fourchette_min }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ form.fourchette_max.label }}</label>
+                {{ form.fourchette_max }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Pesées individuelles (10 % du cheptel)</legend>
+        {{ formset.management_form }}
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle" id="tableau-pesees">
+                <thead>
+                    <tr>
+                        <th style="width:15%">N° sujet<br><small class="text-muted fw-normal">(automatique)</small></th>
+                        <th>Poids (g)</th>
+                        <th style="width:10%"></th>
+                    </tr>
+                </thead>
+                <tbody id="corps-formset">
+                {% for f in formset %}
+                    <tr class="ligne-pesee">
+                        <td>{{ f.numero_sujet }}</td>
+                        <td>{{ f.poids_grammes }}</td>
+                        <td class="text-center">
+                            {{ f.id }}
+                            <div class="d-none">{{ f.DELETE }}</div>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-supprimer-ligne" title="Supprimer cette ligne">
+                                <i class="bi bi-dash-circle"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <button type="button" id="btn-ajouter-ligne" class="btn btn-sm btn-argile">
+            <i class="bi bi-plus-circle"></i> Ajouter une ligne
+        </button>
+        <p class="text-muted small mt-2 mb-0">
+            Le numéro de sujet se met à jour automatiquement selon l'ordre des lignes —
+            renseignez uniquement le poids de chaque sujet pesé (environ 10 % du cheptel).
+            <br>Sur la fiche imprimée, les pesées remplissent d'abord entièrement la ligne 1
+            (18 colonnes), puis la ligne 2, et ainsi de suite.
+        </p>
+    </fieldset>
+
+    <button type="submit" class="btn btn-argile"><i class="bi bi-check-circle"></i> Enregistrer</button>
+    <a href="{% url 'poids_semaine_list' %}" class="btn btn-outline-secondary">Annuler</a>
+</form>
+
+<template id="modele-ligne-pesee">
+    <tr class="ligne-pesee">
+        <td>{{ formset.empty_form.numero_sujet }}</td>
+        <td>{{ formset.empty_form.poids_grammes }}</td>
+        <td class="text-center">
+            {{ formset.empty_form.id }}
+            <div class="d-none">{{ formset.empty_form.DELETE }}</div>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-supprimer-ligne" title="Supprimer cette ligne">
+                <i class="bi bi-dash-circle"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const corps = document.getElementById("corps-formset");
+    const modele = document.getElementById("modele-ligne-pesee");
+    const btnAjouter = document.getElementById("btn-ajouter-ligne");
+    const totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+
+    function renumeroterLignes() {
+        let position = 1;
+        corps.querySelectorAll("tr.ligne-pesee").forEach(function (tr) {
+            if (tr.classList.contains("d-none")) return;
+            const champNumero = tr.querySelector('input[name$="-numero_sujet"]');
+            if (champNumero) champNumero.value = position;
+            position += 1;
+        });
+    }
+
+    function attacherSuppression(tr) {
+        const bouton = tr.querySelector(".btn-supprimer-ligne");
+        if (!bouton) return;
+        bouton.addEventListener("click", function () {
+            const caseDelete = tr.querySelector('input[name$="-DELETE"]');
+            if (caseDelete) caseDelete.checked = true;
+            tr.classList.add("d-none");
+            renumeroterLignes();
+        });
+    }
+
+    btnAjouter.addEventListener("click", function () {
+        const index = parseInt(totalFormsInput.value, 10);
+        const fragment = modele.content.cloneNode(true);
+
+        fragment.querySelectorAll("input, select, textarea, label").forEach(function (el) {
+            ["name", "id", "for"].forEach(function (attr) {
+                if (el.hasAttribute(attr)) {
+                    el.setAttribute(attr, el.getAttribute(attr).replace(/__prefix__/g, index));
+                }
+            });
+        });
+
+        const nouvelleLigne = fragment.querySelector("tr");
+        corps.appendChild(nouvelleLigne);
+        totalFormsInput.value = index + 1;
+
+        attacherSuppression(nouvelleLigne);
+        renumeroterLignes();
+
+        const champPoids = nouvelleLigne.querySelector('input[name$="-poids_grammes"]');
+        if (champPoids) champPoids.focus();
+    });
+
+    corps.querySelectorAll("tr.ligne-pesee").forEach(attacherSuppression);
+    renumeroterLignes();
+});
+</script>
+{% endblock %}

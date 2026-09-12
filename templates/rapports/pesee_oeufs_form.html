@@ -1,0 +1,22 @@
+{% extends "rapports/base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<h2 class="mb-3"><i class="bi bi-egg"></i> {{ titre }}</h2>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <form method="post" class="fieldset-argile">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-argile"><i class="bi bi-check-circle"></i> Enregistrer</button>
+            <a href="{% url 'pesee_oeufs_list' %}" class="btn btn-outline-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Semaine n°{{ semaine.semaine_numero }}{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-graph-up"></i> Semaine n°{{ semaine.semaine_numero }}</h2>
+    <div>
+        <a href="{% url 'poids_semaine_imprimer' semaine.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
+        <a href="{% url 'poids_semaine_pdf' semaine.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'poids_semaine_update' semaine.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'poids_semaine_delete' semaine.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
+    </div>
+</div>
+
+<div class="card card-argile p-4 mb-4">
+    <div class="row">
+        <div class="col-md-4"><p><strong>Date :</strong> {{ semaine.date|date:"d/m/Y" }}</p></div>
+        <div class="col-md-4"><p><strong>Aliment utilisé :</strong> {{ semaine.aliment_utilise }}</p></div>
+        <div class="col-md-4"><p><strong>Poids visé :</strong> {{ semaine.poids_moyen_vise }} g</p></div>
+    </div>
+    <div class="row">
+        <div class="col-md-4"><p><strong>Fourchette de poids :</strong> {{ semaine.fourchette_affichage|default:"—" }}</p></div>
+    </div>
+    <div class="row">
+        <div class="col-md-4"><p><strong>Sujets pesés :</strong> {{ semaine.nombre_poussins_peses }}</p></div>
+        <div class="col-md-4"><p><strong>Poids total :</strong> {{ semaine.poids_total }} g</p></div>
+        <div class="col-md-4">
+            <p><strong>Poids moyen réel :</strong>
+            {% if semaine.poids_moyen_reel %}
+                <span class="badge badge-argile">{{ semaine.poids_moyen_reel }} g</span>
+            {% else %}—{% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card card-argile">
+    <div class="card-header">Détail des pesées individuelles</div>
+    <div class="table-responsive">
+        <table class="table table-argile mb-0">
+            <thead><tr><th>N° sujet</th><th>Poids (g)</th></tr></thead>
+            <tbody>
+            {% for p in semaine.pesees.all %}
+                <tr><td>{{ p.numero_sujet }}</td><td>{{ p.poids_grammes }}</td></tr>
+            {% empty %}
+                <tr><td colspan="2" class="text-center text-muted py-3">Aucune pesée individuelle saisie.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{# Bloc réutilisable : filtre par mois ou par période, + boutons impression/PDF #}
+{# Variables attendues dans le contexte : url_imprimer, url_pdf #}
+<form method="get" class="row g-2 align-items-end mb-3 fieldset-argile">
+    <div class="col-md-3">
+        <label class="form-label small mb-1">Filtrer par mois</label>
+        <input type="month" name="mois" value="{{ request.GET.mois }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small mb-1">Date de début</label>
+        <input type="date" name="date_debut" value="{{ request.GET.date_debut }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small mb-1">Date de fin</label>
+        <input type="date" name="date_fin" value="{{ request.GET.date_fin }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-argile"><i class="bi bi-funnel"></i> Filtrer</button>
+        <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+    </div>
+</form>
+
+<div class="mb-3 text-end">
+    <a href="{{ url_imprimer }}?{{ request.GET.urlencode }}" target="_blank" class="btn btn-sm btn-argile">
+        <i class="bi bi-printer"></i> Imprimer la sélection
+    </a>
+    <a href="{{ url_pdf }}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-argile">
+        <i class="bi bi-file-earmark-pdf"></i> PDF de la sélection
+    </a>
+</div>

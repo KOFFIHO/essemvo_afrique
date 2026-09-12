@@ -1,0 +1,264 @@
+/* =========================================================
+   ARGILE — La Mémoire du Fermier
+   Thème "vert nature" : verts feuillage, terre, blanc cassé
+   ========================================================= */
+
+:root {
+  --argile-vert-fonce: #1e4d2b;
+  --argile-vert: #2f7a3f;
+  --argile-vert-clair: #7cb342;
+  --argile-vert-tendre: #e6f4ea;
+  --argile-terre: #6b4f2a;
+  --argile-creme: #f7f5ef;
+  --argile-jaune-oeuf: #f2b134;
+  --argile-texte: #23331f;
+}
+
+body {
+  background: linear-gradient(180deg, var(--argile-vert-tendre) 0%, var(--argile-creme) 320px);
+  color: var(--argile-texte);
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* ---------- Barre de navigation ---------- */
+.navbar-argile {
+  background: linear-gradient(120deg, var(--argile-vert-fonce), var(--argile-vert) 80%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  transition: background 0.35s ease;
+}
+
+.navbar-argile .navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff !important;
+}
+
+.navbar-argile .nav-link {
+  color: #eaf6e9 !important;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.navbar-argile .nav-link:hover,
+.navbar-argile .nav-link.active {
+  color: var(--argile-jaune-oeuf) !important;
+  font-weight: 700;
+}
+
+/* ---------- Couleur du navbar selon l'onglet actif (comme les cartes) ---------- */
+
+/* Tableau de bord -> jaune naturel */
+body.theme-jaune .navbar-argile {
+  background: linear-gradient(120deg, #002007, var(--argile-jaune-oeuf) 85%);
+}
+
+/* Vaccination eau de boisson -> vert (thème par défaut, explicite pour la transition) */
+body.theme-vert .navbar-argile {
+  background: linear-gradient(120deg, var(--argile-vert-fonce), var(--argile-vert) 80%);
+}
+
+/* Vaccination injection -> terre */
+body.theme-terre .navbar-argile {
+  background: linear-gradient(120deg, #4a371e, var(--argile-terre) 85%);
+}
+
+/* Poids hebdomadaire -> vert clair / feuillage */
+body.theme-vert-clair .navbar-argile {
+  background: linear-gradient(120deg, var(--argile-vert), var(--argile-vert-clair) 85%);
+}
+
+/* Pesée des œufs -> jaune œuf */
+body.theme-jaune-oeuf .navbar-argile {
+  background: linear-gradient(120deg, #c98d1a, var(--argile-jaune-oeuf) 85%);
+}
+
+/* Exploitations -> vert foncé */
+body.theme-vert-fonce .navbar-argile {
+  background: linear-gradient(120deg, #14351d, var(--argile-vert-fonce) 85%);
+}
+
+/* Sur fond jaune, texte foncé pour garder un bon contraste */
+body.theme-jaune .navbar-argile .navbar-brand,
+body.theme-jaune .navbar-argile .nav-link,
+body.theme-jaune .navbar-argile .navbar-text,
+body.theme-jaune-oeuf .navbar-argile .navbar-brand,
+body.theme-jaune-oeuf .navbar-argile .nav-link,
+body.theme-jaune-oeuf .navbar-argile .navbar-text {
+  color: #3a2a00 !important;
+}
+
+body.theme-jaune .navbar-argile .nav-link:hover,
+body.theme-jaune .navbar-argile .nav-link.active,
+body.theme-jaune-oeuf .navbar-argile .nav-link:hover,
+body.theme-jaune-oeuf .navbar-argile .nav-link.active {
+  color: #1e4d2b !important;
+}
+
+/* ---------- Bandeau d'en-tête (façon "hero" nature) ---------- */
+.argile-hero {
+  background:
+    linear-gradient(120deg, rgba(30, 77, 43, 0.88), rgba(47, 122, 63, 0.78)),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0 12px, transparent 12px 24px);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 2.5rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.argile-hero::after {
+  content: "🌿";
+  position: absolute;
+  right: -10px;
+  bottom: -30px;
+  font-size: 9rem;
+  opacity: 0.15;
+  transform: rotate(-10deg);
+}
+
+.argile-hero h1 {
+  font-weight: 700;
+}
+
+/* ---------- Cartes ---------- */
+.card-argile {
+  border: none;
+  border-radius: 0.9rem;
+  box-shadow: 0 4px 14px rgba(30, 77, 43, 0.10);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  height: 100%;
+}
+
+.card-argile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(30, 77, 43, 0.18);
+}
+
+.card-argile .card-header {
+  background: var(--argile-vert);
+  color: #fff;
+  border-radius: 0.9rem 0.9rem 0 0 !important;
+  font-weight: 600;
+}
+
+.card-argile.card-terre .card-header { background: var(--argile-terre); }
+.card-argile.card-jaune .card-header { background: #c98d1a; }
+
+.stat-nombre {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--argile-vert-fonce);
+}
+
+/* ---------- Boutons ---------- */
+.btn-argile {
+  background-color: var(--argile-vert);
+  border-color: var(--argile-vert);
+  color: #fff;
+}
+
+.btn-argile:hover {
+  background-color: var(--argile-vert-fonce);
+  border-color: var(--argile-vert-fonce);
+  color: #fff;
+}
+
+.btn-outline-argile {
+  color: var(--argile-vert-fonce);
+  border-color: var(--argile-vert);
+}
+
+.btn-outline-argile:hover {
+  background-color: var(--argile-vert);
+  color: #fff;
+}
+
+/* ---------- Tableaux ---------- */
+.table-argile thead {
+  background-color: var(--argile-vert-fonce);
+  color: #fff;
+}
+
+.table-argile tbody tr:hover {
+  background-color: var(--argile-vert-tendre);
+}
+
+/* ---------- Formulaires ---------- */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--argile-vert);
+  box-shadow: 0 0 0 0.2rem rgba(47, 122, 63, 0.25);
+}
+
+.fieldset-argile {
+  border: 1px solid #cfe3d2;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  background-color: #fff;
+}
+
+.fieldset-argile legend {
+  width: auto;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--argile-vert-fonce);
+}
+
+/* ---------- Pied de page ---------- */
+footer.footer-argile {
+  background-color: var(--argile-vert-fonce);
+  color: #eaf6e9;
+  padding: 0.7rem 0;
+}
+
+footer.footer-argile a { color: var(--argile-jaune-oeuf); }
+
+/* Pied de page fixé en bas de l'écran, toujours visible */
+footer.footer-fixe {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 1030; /* au-dessus du contenu, sous les modales Bootstrap */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Réserve la place nécessaire en bas de page pour que le contenu
+   ne soit jamais masqué par le pied de page fixe. */
+body.page-avec-footer-fixe {
+  padding-bottom: 3.2rem;
+}
+
+@media (max-width: 767.98px) {
+  body.page-avec-footer-fixe {
+    padding-bottom: 4.2rem; /* le texte du footer passe sur 2 lignes en mobile */
+  }
+}
+
+/* ---------- Badges état ---------- */
+.badge-argile { background-color: var(--argile-vert); }
+.badge-terre { background-color: var(--argile-terre); }
+.badge-jaune { background-color: var(--argile-jaune-oeuf); color: #3a2a00; }
+
+/* ---------- Page de connexion ---------- */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(160deg, rgba(30, 77, 43, 0.92), rgba(124, 179, 66, 0.85));
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2.5rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}

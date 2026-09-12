@@ -1,0 +1,64 @@
+{% extends "rapports/print/base_pdf.html" %}
+
+{% block titre %}Semaine n°{{ semaine.semaine_numero }} — Poids{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <a href="{% url 'poids_semaine_pdf' semaine.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
+</div>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    table.grille-poids th, table.grille-poids td { font-size: 9px; padding: 3px; }
+    table.grille-poids th.col-poids, table.grille-poids td.col-poids { background-color:#e6f4ea; font-weight:bold; }
+</style>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">POIDS MOYEN HEBDOMADAIRE VISÉ &nbsp;~&nbsp; SEMAINE N°{{ semaine.semaine_numero }}</div>
+
+<table class="fiche">
+    <tr>
+        <td class="libelle">Aliment utilisé pour l'alimentation</td>
+        <td>{{ semaine.aliment_utilise }}</td>
+        <td class="libelle">Date</td>
+        <td>{{ semaine.date|date:"d/m/Y" }}</td>
+    </tr>
+    <tr>
+        <td class="libelle">Poids moyen hebdomadaire visé</td>
+        <td>{{ semaine.poids_moyen_vise }} g</td>
+        <td class="libelle">Fourchette de poids</td>
+        <td>{{ semaine.fourchette_affichage|default:"—" }}</td>
+    </tr>
+</table>
+
+<table class="fiche grille-poids">
+    <thead>
+        <tr>
+            <th class="col-poids">POIDS</th>
+            {% for c in colonnes %}<th>{{ c }}</th>{% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for ligne in lignes %}
+        <tr>
+            <td class="col-poids">{{ ligne.numero }}</td>
+            {% for v in ligne.valeurs %}<td>{{ v|default:"" }}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<table class="fiche">
+    <tr>
+        <td class="libelle">POIDS TOTAL DES POUSSINS PESÉS<br>(10&nbsp;% du cheptel)</td>
+        <td>{{ semaine.poids_total }} g</td>
+        <td class="libelle">NOMBRE DE POUSSINS PESÉS<br>(10&nbsp;% du cheptel)</td>
+        <td>{{ semaine.nombre_poussins_peses }}</td>
+        <td class="libelle">POIDS MOYEN</td>
+        <td>{{ semaine.poids_moyen_reel|default:"—" }} g</td>
+    </tr>
+</table>
+{% endblock %}

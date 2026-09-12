@@ -1,0 +1,84 @@
+{% extends "rapports/print/base_pdf.html" %}
+
+{% block titre %}Fiche eau de boisson n°{{ fiche.numero_fiche }}{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <a href="{% url 'vaccination_eau_pdf' fiche.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
+</div>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">
+    FICHE DE RAPPORT DE VACCINATION EN EAU DE BOISSON &nbsp;~&nbsp; N°{{ fiche.numero_fiche }}
+</div>
+
+<table class="fiche">
+    <thead>
+        <tr>
+            <th rowspan="2">DATE</th>
+            <th rowspan="2">ÂGE DES<br>SUJETS</th>
+            <th rowspan="2">NOMBRE<br>DE SUJETS</th>
+            <th rowspan="2">NOMBRE<br>DE DOSES<br>UTILISÉ</th>
+            <th colspan="4">PRÉPARATION DU VACCIN</th>
+            <th colspan="4">ADMINISTRATION</th>
+            <th rowspan="2">DATE DE<br>VALIDITÉ<br>DU VACCIN</th>
+        </tr>
+        <tr>
+            <th>VACCIN UTILISÉ<br>(LE NOM)</th>
+            <th>TYPE D'EAU<br>UTILISÉE</th>
+            <th>QUANTITÉ D'EAU<br>INITIALE (L)</th>
+            <th>QUANTITÉ D'EAU<br>RESTE (L)</th>
+            <th>HEURE<br>D'ASSOIFFEMENT<br>DÉBUT</th>
+            <th>HEURE<br>D'ASSOIFFEMENT<br>FIN</th>
+            <th>HEURE<br>D'ABREUVEMENT<br>DÉBUT</th>
+            <th>HEURE<br>D'ABREUVEMENT<br>FIN</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ fiche.date|date:"d/m/Y" }}</td>
+            <td>{{ fiche.age_sujets }}</td>
+            <td>{{ fiche.nombre_sujets }}</td>
+            <td>{{ fiche.nombre_doses_utilise }}</td>
+            <td>{{ fiche.vaccin_utilise }}</td>
+            <td>{{ fiche.get_type_eau_utilisee_display }}</td>
+            <td>{{ fiche.quantite_eau_initiale }}</td>
+            <td>{{ fiche.quantite_eau_reste }}</td>
+            <td>{{ fiche.heure_assoiffement_debut|time:"H:i" }}</td>
+            <td>{{ fiche.heure_assoiffement_fin|time:"H:i" }}</td>
+            <td>{{ fiche.heure_abreuvement_debut|time:"H:i" }}</td>
+            <td>{{ fiche.heure_abreuvement_fin|time:"H:i" }}</td>
+            <td>{{ fiche.date_validite_vaccin|date:"d/m/Y" }}</td>
+        </tr>
+    </tbody>
+</table>
+
+{% if fiche.image_etiquette %}
+<table class="fiche">
+    <tr>
+        <td class="libelle">IMAGE ÉTIQUETTE<br>DU VACCIN</td>
+        <td style="text-align:center;">
+            <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" style="max-height:160px; max-width:260px;">
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+{% if fiche.observations %}
+<table class="fiche">
+    <tr>
+        <td class="libelle">OBSERVATIONS</td>
+        <td style="text-align:left;">{{ fiche.observations }}</td>
+    </tr>
+</table>
+{% endif %}
+
+<table class="bloc-signature">
+    <tr>
+        <td>Visa de l'agent</td>
+        <td>Visa du responsable d'élevage</td>
+    </tr>
+</table>
+{% endblock %}

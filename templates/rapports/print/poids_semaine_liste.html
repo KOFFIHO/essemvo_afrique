@@ -1,0 +1,35 @@
+{% extends "rapports/print/base_pdf.html" %}
+{% block titre %}Historique — poids hebdomadaire{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+</div>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">HISTORIQUE — POIDS MOYEN HEBDOMADAIRE VISÉ</div>
+
+<table class="fiche">
+    <thead>
+        <tr>
+            <th>Semaine n°</th><th>Date</th><th>Aliment utilisé</th>
+            <th>Poids visé (g)</th><th>Sujets pesés</th><th>Poids moyen réel</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in semaines %}
+        <tr>
+            <td>{{ s.semaine_numero }}</td>
+            <td>{{ s.date|date:"d/m/Y" }}</td>
+            <td>{{ s.aliment_utilise }}</td>
+            <td>{{ s.poids_moyen_vise }}</td>
+            <td>{{ s.nombre_poussins_peses }}</td>
+            <td>{{ s.poids_moyen_reel|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Aucune semaine pour la période sélectionnée.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

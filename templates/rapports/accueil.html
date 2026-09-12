@@ -1,0 +1,134 @@
+{% extends "rapports/base.html" %}
+
+{% block titre %}Tableau de bord{% endblock %}
+
+{% block contenu %}
+<div class="argile-hero">
+    <h1>Bonjour {{ user.get_username }} 👋</h1>
+    {% if exploitation %}
+        <p class="lead mb-0">Exploitation active : <strong>{{ exploitation.nom }}</strong>
+        {% if exploitation.localisation %} — {{ exploitation.localisation }}{% endif %}</p>
+    {% else %}
+        <p class="lead mb-0">Vous n'avez pas encore d'exploitation. Créez-en une pour commencer vos rapports.</p>
+        <a href="{% url 'exploitation_creer' %}" class="btn btn-light mt-3"><i class="bi bi-plus-circle"></i> Créer mon exploitation</a>
+    {% endif %}
+</div>
+
+{% if exploitation %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-droplet fs-2 text-success"></i>
+            <div class="stat-nombre">{{ nb_vaccins_eau }}</div>
+            <div>Fiches — eau de boisson</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-capsule fs-2 text-success"></i>
+            <div class="stat-nombre">{{ nb_vaccins_injection }}</div>
+            <div>Fiches — injection</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-graph-up fs-2 text-success"></i>
+            <div class="stat-nombre">{{ nb_semaines_poids }}</div>
+            <div>Semaines de pesée</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-egg fs-2 text-warning"></i>
+            <div class="stat-nombre">{{ nb_pesees_oeufs }}</div>
+            <div>Pesées d'œufs</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-6 d-grid">
+        <a href="{% url 'vaccination_eau_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Fiche eau de boisson</a>
+    </div>
+    <div class="col-md-3 col-6 d-grid">
+        <a href="{% url 'vaccination_injection_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Fiche injection</a>
+    </div>
+    <div class="col-md-3 col-6 d-grid">
+        <a href="{% url 'poids_semaine_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Semaine de pesée</a>
+    </div>
+    <div class="col-md-3 col-6 d-grid">
+        <a href="{% url 'pesee_oeufs_create' %}" class="btn btn-argile"><i class="bi bi-plus-circle"></i> Pesée d'œufs</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card card-argile">
+            <div class="card-header"><i class="bi bi-droplet"></i> Dernières vaccinations — eau de boisson</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>N°</th><th>Date</th><th>Vaccin</th><th></th></tr></thead>
+                    <tbody>
+                    {% for f in dernieres_vaccinations_eau %}
+                        <tr>
+                            <td>{{ f.numero_fiche }}</td>
+                            <td>{{ f.date|date:"d/m/Y" }}</td>
+                            <td>{{ f.vaccin_utilise }}</td>
+                            <td><a href="{% url 'vaccination_eau_detail' f.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune fiche pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-argile card-terre">
+            <div class="card-header"><i class="bi bi-capsule"></i> Dernières vaccinations — injection</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>N°</th><th>Date</th><th>Produit</th><th></th></tr></thead>
+                    <tbody>
+                    {% for f in dernieres_vaccinations_injection %}
+                        <tr>
+                            <td>{{ f.numero_fiche }}</td>
+                            <td>{{ f.date|date:"d/m/Y" }}</td>
+                            <td>{{ f.produit_complementaire|default:"—" }}</td>
+                            <td><a href="{% url 'vaccination_injection_detail' f.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune fiche pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-argile card-jaune">
+            <div class="card-header"><i class="bi bi-egg"></i> Dernières pesées d'œufs</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>Date</th><th>Œufs pesés</th><th>Poids moyen</th></tr></thead>
+                    <tbody>
+                    {% for p in dernieres_pesees_oeufs %}
+                        <tr>
+                            <td>{{ p.date|date:"d/m/Y" }}</td>
+                            <td>{{ p.nombre_oeufs_peses }}</td>
+                            <td>{{ p.poids_moyen_oeuf }} g</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucune pesée pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
