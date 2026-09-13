@@ -35,6 +35,8 @@ urlpatterns = [
     # Pesée quotidienne des œufs
     path("oeufs/", views.pesee_oeufs_list, name="pesee_oeufs_list"),
     path("oeufs/nouvelle/", views.pesee_oeufs_create, name="pesee_oeufs_create"),
+    path("oeufs/<int:pk>/", views.pesee_oeufs_detail, name="pesee_oeufs_detail"),
+    path("oeufs/<int:pk>/modifier/", views.pesee_oeufs_update, name="pesee_oeufs_update"),
     path("oeufs/<int:pk>/supprimer/", views.pesee_oeufs_delete, name="pesee_oeufs_delete"),
 
     # --- Impression / PDF (format A4) ---
@@ -49,6 +51,9 @@ urlpatterns = [
 
     path("oeufs/imprimer/", views.pesee_oeufs_imprimer, name="pesee_oeufs_imprimer"),
     path("oeufs/pdf/", views.pesee_oeufs_pdf, name="pesee_oeufs_pdf"),
+    path("oeufs/<int:pk>/imprimer/", views.pesee_oeufs_imprimer_unique, name="pesee_oeufs_imprimer_unique"),
+    path("oeufs/<int:pk>/pdf/", views.pesee_oeufs_pdf_unique, name="pesee_oeufs_pdf_unique"),
+    path("oeufs/<int:pk>/drive/", views.pesee_oeufs_drive_unique, name="pesee_oeufs_drive_unique"),
 
     # --- Historique complet (filtré) : impression / PDF ---
     path("vaccination/eau/historique/imprimer/", views.vaccination_eau_liste_imprimer, name="vaccination_eau_liste_imprimer"),
@@ -59,4 +64,30 @@ urlpatterns = [
 
     path("poids/historique/imprimer/", views.poids_semaine_liste_imprimer, name="poids_semaine_liste_imprimer"),
     path("poids/historique/pdf/", views.poids_semaine_liste_pdf, name="poids_semaine_liste_pdf"),
+
+    # --- Google Drive ---
+    path("drive/connexion/", views.drive_connexion, name="drive_connexion"),
+    path("drive/callback/", views.drive_callback, name="drive_callback"),
+    path("drive/deconnexion/", views.drive_deconnexion, name="drive_deconnexion"),
+
+    path("vaccination/eau/<int:pk>/drive/", views.vaccination_eau_drive, name="vaccination_eau_drive"),
+    path("vaccination/injection/<int:pk>/drive/", views.vaccination_injection_drive, name="vaccination_injection_drive"),
+    path("poids/<int:pk>/drive/", views.poids_semaine_drive, name="poids_semaine_drive"),
+    path("oeufs/drive/", views.pesee_oeufs_drive, name="pesee_oeufs_drive"),
+
+    # --- Appareils connectés ---
+    path("mes-appareils/", views.mes_appareils, name="mes_appareils"),
+    path("mes-appareils/<int:pk>/deconnecter/", views.deconnecter_appareil, name="deconnecter_appareil"),
+
+    # --- Rapport journalier ---
+    path("rapports-journaliers/", views.rapport_journalier_list, name="rapport_journalier_list"),
+    path("rapports-journaliers/nouveau/", views.rapport_journalier_create, name="rapport_journalier_create"),
+    path("rapports-journaliers/<int:pk>/", views.rapport_journalier_detail, name="rapport_journalier_detail"),
+    path("rapports-journaliers/<int:pk>/modifier/", views.rapport_journalier_update, name="rapport_journalier_update"),
+    path("rapports-journaliers/<int:pk>/supprimer/", views.rapport_journalier_delete, name="rapport_journalier_delete"),
+    path("rapports-journaliers/<int:pk>/imprimer/", views.rapport_journalier_imprimer, name="rapport_journalier_imprimer"),
+    path("rapports-journaliers/<int:pk>/pdf/", views.rapport_journalier_pdf, name="rapport_journalier_pdf"),
+    path("rapports-journaliers/<int:pk>/drive/", views.rapport_journalier_drive, name="rapport_journalier_drive"),
+    path("rapports-journaliers/historique/imprimer/", views.rapport_journalier_liste_imprimer, name="rapport_journalier_liste_imprimer"),
+    path("rapports-journaliers/historique/pdf/", views.rapport_journalier_liste_pdf, name="rapport_journalier_liste_pdf"),
 ]

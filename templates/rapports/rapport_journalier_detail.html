@@ -1,0 +1,39 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Rapport du {{ rapport.date|date:"d/m/Y" }}{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-journal-text"></i> Rapport du {{ rapport.date|date:"d/m/Y" }}</h2>
+    <div>
+        <a href="{% url 'rapport_journalier_imprimer' rapport.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
+        <a href="{% url 'rapport_journalier_pdf' rapport.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'rapport_journalier_drive' rapport.pk %}" class="btn btn-outline-argile"><i class="bi bi-cloud-arrow-up"></i> Drive</a>
+        <a href="{% url 'rapport_journalier_update' rapport.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'rapport_journalier_delete' rapport.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
+    </div>
+</div>
+
+<div class="card card-argile p-4">
+    <div class="row">
+        <div class="col-md-3"><p><strong>Date :</strong> {{ rapport.date|date:"d/m/Y" }}</p></div>
+        <div class="col-md-3"><p><strong>Âge (jours) :</strong> {{ rapport.age_jour|default:"—" }}</p></div>
+        <div class="col-md-3"><p><strong>Effectif de départ :</strong> {{ rapport.effectif_depart }}</p></div>
+        <div class="col-md-3"><p><strong>Mortalité du jour :</strong> {{ rapport.mortalite_jour }}</p></div>
+    </div>
+    <div class="row">
+        <div class="col-md-3"><p><strong>Effectif restant :</strong> <span class="badge badge-argile">{{ rapport.effectif_restant }}</span></p></div>
+        <div class="col-md-3"><p><strong>Aliments consommés :</strong> {{ rapport.conso_aliments_kg|default:"—" }} kg</p></div>
+        <div class="col-md-3"><p><strong>Eau consommée :</strong> {{ rapport.conso_eau_litres|default:"—" }} L</p></div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-4"><p><strong>Production d'œufs :</strong> {{ rapport.production_oeufs_plaquettes|default:"—" }} plaquette(s)</p></div>
+        <div class="col-md-4"><p><strong>Œufs cassés :</strong> {{ rapport.nombre_oeufs_casses|default:"—" }}</p></div>
+        <div class="col-md-4"><p><strong>Poids moyen des œufs :</strong> {{ rapport.poids_moyen_oeufs|default:"—" }} g</p></div>
+    </div>
+    {% if rapport.protocole_traitement_vaccination %}
+    <hr>
+    <p><strong>Protocoles de traitement et de vaccination :</strong></p>
+    <p style="white-space: pre-line;">{{ rapport.protocole_traitement_vaccination }}</p>
+    {% endif %}
+</div>
+{% endblock %}

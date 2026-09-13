@@ -24,7 +24,7 @@
             {% endif %}
             <span>
                 {% if exploitation_courante %}{{ exploitation_courante.nom }}{% else %}ARGILE{% endif %}
-                <small class="d-none d-md-inline">— Essemvo Afrik</small>
+                <small class="d-none d-md-inline">— La Mémoire du Fermier</small>
             </span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navArgile">
@@ -36,6 +36,11 @@
                 <li class="nav-item">
                     <a class="nav-link texte-jaune {% if nom_onglet == 'accueil' %}active{% endif %}" href="{% url 'accueil' %}">
                         <i class="bi bi-house-door"></i> Tableau de bord
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link texte-journalier {% if 'rapport_journalier' in nom_onglet %}active{% endif %}" href="{% url 'rapport_journalier_list' %}">
+                        <i class="bi bi-journal-text"></i> Rapport journalier
                     </a>
                 </li>
                 <li class="nav-item">
@@ -64,6 +69,9 @@
                     </a>
                 </li>
             </ul>
+            <a href="{% url 'mes_appareils' %}" class="btn btn-sm btn-outline-light me-2" title="Appareils connectés">
+                <i class="bi bi-laptop"></i>
+            </a>
             <span class="navbar-text me-3">
                 <i class="bi bi-person-circle"></i> {{ user.get_username }}
             </span>
@@ -91,8 +99,8 @@
 
 <footer class="footer-argile footer-fixe text-center">
     <div class="container small">
-        🌾 <strong>ARGILE</strong> — Plateforme de rapports d'élevage avicole
-        <span class="d-none d-md-inline"> · Inspiré de « La Mémoire du Fermier » — ESSEMVO AFRIQUE, Bp 79 Man, Côte d'Ivoire</span>
+        🌾 <strong>Plateforme de rapports d'élevage avicole</strong> — 
+        <span class="d-none d-md-inline"> « La Mémoire du Fermier » — ESSEMVO AFRIQUE, Bp 79 Man, Côte d'Ivoire</span>
     </div>
 </footer>
 

@@ -6,6 +6,7 @@
     <div>
         <a href="{% url 'vaccination_injection_imprimer' fiche.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
         <a href="{% url 'vaccination_injection_pdf' fiche.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'vaccination_injection_drive' fiche.pk %}" class="btn btn-outline-argile"><i class="bi bi-cloud-arrow-up"></i> Drive</a>
         <a href="{% url 'vaccination_injection_update' fiche.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
         <a href="{% url 'vaccination_injection_delete' fiche.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
     </div>

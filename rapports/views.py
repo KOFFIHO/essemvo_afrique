@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.sessions.models import Session
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from .forms import (
     ExploitationForm,
@@ -11,15 +14,21 @@ from .forms import (
     PeseeIndividuelleFormSet,
     PeseeQuotidienneOeufsForm,
     PoidsHebdomadaireForm,
+    RapportJournalierForm,
 )
+from .google_drive import construire_flow, televerser_pdf
 from .models import (
+    AppareilConnecte,
+    CompteGoogleDrive,
     Exploitation,
     FicheVaccinationEauBoisson,
     FicheVaccinationInjection,
+    ImageEtiquetteVaccinEau,
     PeseeQuotidienneOeufs,
     PoidsHebdomadaire,
+    RapportJournalier,
 )
-from .utils import render_to_pdf
+from .utils import generer_pdf_bytes, render_to_pdf
 
 
 # ---------------------------------------------------------------------------
@@ -94,6 +103,9 @@ def accueil(request):
                 "nb_pesees_oeufs": PeseeQuotidienneOeufs.objects.filter(
                     exploitation=exploitation
                 ).count(),
+                "nb_rapports_journaliers": RapportJournalier.objects.filter(
+                    exploitation=exploitation
+                ).count(),
                 "dernieres_vaccinations_eau": FicheVaccinationEauBoisson.objects.filter(
                     exploitation=exploitation
                 )[:5],
@@ -101,6 +113,12 @@ def accueil(request):
                     exploitation=exploitation
                 )[:5],
                 "dernieres_pesees_oeufs": PeseeQuotidienneOeufs.objects.filter(
+                    exploitation=exploitation
+                )[:5],
+                "dernieres_semaines_poids": PoidsHebdomadaire.objects.filter(
+                    exploitation=exploitation
+                )[:5],
+                "derniers_rapports_journaliers": RapportJournalier.objects.filter(
                     exploitation=exploitation
                 )[:5],
             }
@@ -191,6 +209,8 @@ def vaccination_eau_create(request):
             fiche.exploitation = exploitation
             fiche.numero_fiche = _prochain_numero_fiche(FicheVaccinationEauBoisson, exploitation)
             fiche.save()
+            for image in request.FILES.getlist("images_etiquettes"):
+                ImageEtiquetteVaccinEau.objects.create(fiche=fiche, image=image)
             messages.success(request, "Fiche de vaccination (eau de boisson) enregistrée.")
             return redirect("vaccination_eau_detail", pk=fiche.pk)
     else:
@@ -205,6 +225,15 @@ def vaccination_eau_update(request, pk):
         form = FicheVaccinationEauBoissonForm(request.POST, request.FILES, instance=fiche)
         if form.is_valid():
             form.save()
+            # Suppression des images cochées « à retirer »
+            for cle in request.POST:
+                if cle.startswith("supprimer_image_"):
+                    ImageEtiquetteVaccinEau.objects.filter(
+                        pk=cle.replace("supprimer_image_", ""), fiche=fiche
+                    ).delete()
+            # Ajout des nouvelles images sélectionnées
+            for image in request.FILES.getlist("images_etiquettes"):
+                ImageEtiquetteVaccinEau.objects.create(fiche=fiche, image=image)
             messages.success(request, "Fiche mise à jour.")
             return redirect("vaccination_eau_detail", pk=fiche.pk)
     else:
@@ -392,6 +421,26 @@ def pesee_oeufs_create(request):
 
 
 @login_required
+def pesee_oeufs_detail(request, pk):
+    pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
+    return render(request, "rapports/pesee_oeufs_detail.html", {"pesee": pesee})
+
+
+@login_required
+def pesee_oeufs_update(request, pk):
+    pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
+    if request.method == "POST":
+        form = PeseeQuotidienneOeufsForm(request.POST, instance=pesee)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pesée mise à jour.")
+            return redirect("pesee_oeufs_detail", pk=pesee.pk)
+    else:
+        form = PeseeQuotidienneOeufsForm(instance=pesee)
+    return render(request, "rapports/pesee_oeufs_form.html", {"form": form, "titre": "Modifier la pesée"})
+
+
+@login_required
 def pesee_oeufs_delete(request, pk):
     pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
     if request.method == "POST":
@@ -404,10 +453,22 @@ def pesee_oeufs_delete(request, pk):
 # ---------------------------------------------------------------------------
 # Impression et téléchargement PDF des fiches (format A4)
 # ---------------------------------------------------------------------------
+def _grouper_par_paires(sequence):
+    """Découpe une liste en sous-listes de 2 éléments (grille d'images 2 x 2 sur les PDF)."""
+    elements = list(sequence)
+    return [elements[i:i + 2] for i in range(0, len(elements), 2)]
+
+
 @login_required
 def vaccination_eau_imprimer(request, pk):
     fiche = get_object_or_404(FicheVaccinationEauBoisson, pk=pk, exploitation__proprietaire=request.user)
-    return render(request, "rapports/print/vaccination_eau.html", {"fiche": fiche, "exploitation": fiche.exploitation})
+    contexte = {
+        "fiche": fiche,
+        "exploitation": fiche.exploitation,
+        "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
+        "url_retour": reverse("vaccination_eau_detail", args=[fiche.pk]),
+    }
+    return render(request, "rapports/print/vaccination_eau.html", contexte)
 
 
 @login_required
@@ -416,7 +477,11 @@ def vaccination_eau_pdf(request, pk):
     nom = f"fiche_vaccination_eau_{fiche.numero_fiche}.pdf"
     return render_to_pdf(
         "rapports/print/vaccination_eau.html",
-        {"fiche": fiche, "exploitation": fiche.exploitation},
+        {
+            "fiche": fiche,
+            "exploitation": fiche.exploitation,
+            "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
+        },
         nom_fichier=nom,
     )
 
@@ -424,7 +489,12 @@ def vaccination_eau_pdf(request, pk):
 @login_required
 def vaccination_injection_imprimer(request, pk):
     fiche = get_object_or_404(FicheVaccinationInjection, pk=pk, exploitation__proprietaire=request.user)
-    return render(request, "rapports/print/vaccination_injection.html", {"fiche": fiche, "exploitation": fiche.exploitation})
+    contexte = {
+        "fiche": fiche,
+        "exploitation": fiche.exploitation,
+        "url_retour": reverse("vaccination_injection_detail", args=[fiche.pk]),
+    }
+    return render(request, "rapports/print/vaccination_injection.html", contexte)
 
 
 @login_required
@@ -471,7 +541,9 @@ def _contexte_grille_poids(semaine):
 @login_required
 def poids_semaine_imprimer(request, pk):
     semaine = get_object_or_404(PoidsHebdomadaire, pk=pk, exploitation__proprietaire=request.user)
-    return render(request, "rapports/print/poids_semaine.html", _contexte_grille_poids(semaine))
+    contexte = _contexte_grille_poids(semaine)
+    contexte["url_retour"] = reverse("poids_semaine_detail", args=[semaine.pk])
+    return render(request, "rapports/print/poids_semaine.html", contexte)
 
 
 @login_required
@@ -486,7 +558,8 @@ def pesee_oeufs_imprimer(request):
     exploitation = get_exploitation_courante(request)
     pesees = PeseeQuotidienneOeufs.objects.filter(exploitation=exploitation) if exploitation else PeseeQuotidienneOeufs.objects.none()
     pesees = filtrer_par_periode(request, pesees)
-    return render(request, "rapports/print/pesee_oeufs.html", {"pesees": pesees, "exploitation": exploitation})
+    contexte = {"pesees": pesees, "exploitation": exploitation, "url_retour": reverse("pesee_oeufs_list")}
+    return render(request, "rapports/print/pesee_oeufs.html", contexte)
 
 
 @login_required
@@ -501,6 +574,37 @@ def pesee_oeufs_pdf(request):
     )
 
 
+@login_required
+def pesee_oeufs_imprimer_unique(request, pk):
+    pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
+    contexte = {
+        "pesees": [pesee],
+        "exploitation": pesee.exploitation,
+        "url_retour": reverse("pesee_oeufs_detail", args=[pesee.pk]),
+    }
+    return render(request, "rapports/print/pesee_oeufs.html", contexte)
+
+
+@login_required
+def pesee_oeufs_pdf_unique(request, pk):
+    pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
+    return render_to_pdf(
+        "rapports/print/pesee_oeufs.html",
+        {"pesees": [pesee], "exploitation": pesee.exploitation},
+        nom_fichier=f"pesee_oeufs_{pesee.date}.pdf",
+    )
+
+
+@login_required
+def pesee_oeufs_drive_unique(request, pk):
+    pesee = get_object_or_404(PeseeQuotidienneOeufs, pk=pk, exploitation__proprietaire=request.user)
+    nom_fichier = f"pesee_oeufs_{pesee.date}.pdf"
+    return _envoyer_vers_drive(
+        request, pesee.exploitation, "Pesée des œufs", nom_fichier,
+        "rapports/print/pesee_oeufs.html", {"pesees": [pesee], "exploitation": pesee.exploitation},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Impression / PDF des historiques complets (avec filtre période/mois)
 # ---------------------------------------------------------------------------
@@ -509,7 +613,8 @@ def vaccination_eau_liste_imprimer(request):
     exploitation = get_exploitation_courante(request)
     fiches = FicheVaccinationEauBoisson.objects.filter(exploitation=exploitation) if exploitation else FicheVaccinationEauBoisson.objects.none()
     fiches = filtrer_par_periode(request, fiches)
-    return render(request, "rapports/print/vaccination_eau_liste.html", {"fiches": fiches, "exploitation": exploitation})
+    contexte = {"fiches": fiches, "exploitation": exploitation, "url_retour": reverse("vaccination_eau_list")}
+    return render(request, "rapports/print/vaccination_eau_liste.html", contexte)
 
 
 @login_required
@@ -529,7 +634,8 @@ def vaccination_injection_liste_imprimer(request):
     exploitation = get_exploitation_courante(request)
     fiches = FicheVaccinationInjection.objects.filter(exploitation=exploitation) if exploitation else FicheVaccinationInjection.objects.none()
     fiches = filtrer_par_periode(request, fiches)
-    return render(request, "rapports/print/vaccination_injection_liste.html", {"fiches": fiches, "exploitation": exploitation})
+    contexte = {"fiches": fiches, "exploitation": exploitation, "url_retour": reverse("vaccination_injection_list")}
+    return render(request, "rapports/print/vaccination_injection_liste.html", contexte)
 
 
 @login_required
@@ -549,7 +655,8 @@ def poids_semaine_liste_imprimer(request):
     exploitation = get_exploitation_courante(request)
     semaines = PoidsHebdomadaire.objects.filter(exploitation=exploitation) if exploitation else PoidsHebdomadaire.objects.none()
     semaines = filtrer_par_periode(request, semaines)
-    return render(request, "rapports/print/poids_semaine_liste.html", {"semaines": semaines, "exploitation": exploitation})
+    contexte = {"semaines": semaines, "exploitation": exploitation, "url_retour": reverse("poids_semaine_list")}
+    return render(request, "rapports/print/poids_semaine_liste.html", contexte)
 
 
 @login_required
@@ -561,4 +668,318 @@ def poids_semaine_liste_pdf(request):
         "rapports/print/poids_semaine_liste.html",
         {"semaines": semaines, "exploitation": exploitation},
         nom_fichier="historique_poids_semaines.pdf",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Google Drive — connexion OAuth2 et envoi des fiches PDF
+# ---------------------------------------------------------------------------
+@login_required
+def drive_connexion(request):
+    """Lance le parcours OAuth2 : redirige l'utilisateur vers l'écran de consentement Google."""
+    if request.GET.get("retour"):
+        request.session["drive_retour_url"] = request.GET["retour"]
+
+    flow = construire_flow()
+    url_autorisation, state = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",  # force le renvoi d'un refresh_token à chaque connexion
+    )
+    request.session["drive_oauth_state"] = state
+    return redirect(url_autorisation)
+
+
+@login_required
+def drive_callback(request):
+    """Reçoit le retour de Google, échange le code contre des jetons, et les enregistre."""
+    state = request.session.get("drive_oauth_state")
+    flow = construire_flow(state=state)
+
+    try:
+        flow.fetch_token(authorization_response=request.build_absolute_uri())
+    except Exception:
+        messages.error(request, "La connexion à Google Drive a échoué ou a été annulée.")
+        return redirect("exploitation_list")
+
+    credentials = flow.credentials
+    CompteGoogleDrive.objects.update_or_create(
+        utilisateur=request.user,
+        defaults={
+            "jeton_acces": credentials.token,
+            "jeton_rafraichissement": credentials.refresh_token or "",
+        },
+    )
+    messages.success(request, "Google Drive connecté avec succès.")
+    return redirect(request.session.pop("drive_retour_url", "exploitation_list"))
+
+
+@login_required
+def drive_deconnexion(request):
+    CompteGoogleDrive.objects.filter(utilisateur=request.user).delete()
+    messages.info(request, "Google Drive déconnecté.")
+    return redirect("exploitation_list")
+
+
+def _envoyer_vers_drive(request, exploitation, type_fiche, nom_fichier, template_src, context):
+    """
+    Génère le PDF depuis `template_src`/`context` et l'envoie dans
+    Drive/ARGILE/<exploitation>/<type_fiche>/<nom_fichier>. Redirige
+    vers la page de connexion Drive si l'utilisateur n'est pas encore connecté.
+    """
+    try:
+        compte = request.user.compte_drive
+    except CompteGoogleDrive.DoesNotExist:
+        request.session["drive_retour_url"] = request.META.get("HTTP_REFERER", "/")
+        messages.warning(request, "Connectez d'abord votre compte Google Drive.")
+        return redirect("drive_connexion")
+
+    contenu = generer_pdf_bytes(template_src, context)
+    if contenu is None:
+        messages.error(request, "Impossible de générer le PDF à envoyer.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
+    try:
+        lien = televerser_pdf(compte, exploitation.nom, type_fiche, nom_fichier, contenu)
+        messages.success(
+            request,
+            mark_safe(
+                f"Fiche envoyée sur Google Drive (dossier « ARGILE / {exploitation.nom} / {type_fiche} »). "
+                f"<a href='{lien}' target='_blank' class='alert-link'>Ouvrir dans Drive</a>"
+            ),
+        )
+    except Exception as exc:
+        messages.error(request, f"Échec de l'envoi vers Google Drive : {exc}")
+
+    return redirect(request.META.get("HTTP_REFERER", "/"))
+
+
+@login_required
+def vaccination_eau_drive(request, pk):
+    fiche = get_object_or_404(FicheVaccinationEauBoisson, pk=pk, exploitation__proprietaire=request.user)
+    nom_fichier = f"fiche_vaccination_eau_{fiche.numero_fiche}.pdf"
+    return _envoyer_vers_drive(
+        request, fiche.exploitation, "Vaccination - Eau de boisson", nom_fichier,
+        "rapports/print/vaccination_eau.html",
+        {
+            "fiche": fiche,
+            "exploitation": fiche.exploitation,
+            "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
+        },
+    )
+
+
+@login_required
+def vaccination_injection_drive(request, pk):
+    fiche = get_object_or_404(FicheVaccinationInjection, pk=pk, exploitation__proprietaire=request.user)
+    nom_fichier = f"fiche_vaccination_injection_{fiche.numero_fiche}.pdf"
+    return _envoyer_vers_drive(
+        request, fiche.exploitation, "Vaccination - Injection", nom_fichier,
+        "rapports/print/vaccination_injection.html", {"fiche": fiche, "exploitation": fiche.exploitation},
+    )
+
+
+@login_required
+def poids_semaine_drive(request, pk):
+    semaine = get_object_or_404(PoidsHebdomadaire, pk=pk, exploitation__proprietaire=request.user)
+    nom_fichier = f"poids_semaine_{semaine.semaine_numero}.pdf"
+    return _envoyer_vers_drive(
+        request, semaine.exploitation, "Poids hebdomadaire", nom_fichier,
+        "rapports/print/poids_semaine.html", _contexte_grille_poids(semaine),
+    )
+
+
+@login_required
+def pesee_oeufs_drive(request):
+    exploitation = get_exploitation_courante(request)
+    if not exploitation:
+        messages.warning(request, "Sélectionnez d'abord une exploitation.")
+        return redirect("accueil")
+
+    pesees = PeseeQuotidienneOeufs.objects.filter(exploitation=exploitation)
+    pesees = filtrer_par_periode(request, pesees)
+    return _envoyer_vers_drive(
+        request, exploitation, "Pesée des œufs", "pesees_oeufs.pdf",
+        "rapports/print/pesee_oeufs.html", {"pesees": pesees, "exploitation": exploitation},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Appareils connectés (limite de 5 par compte)
+# ---------------------------------------------------------------------------
+@login_required
+def mes_appareils(request):
+    cles_valides = set(
+        Session.objects.filter(expire_date__gt=timezone.now()).values_list("session_key", flat=True)
+    )
+    appareils = AppareilConnecte.objects.filter(utilisateur=request.user).order_by("-derniere_activite")
+    appareils = [a for a in appareils if a.cle_session in cles_valides]
+
+    return render(
+        request,
+        "rapports/mes_appareils.html",
+        {
+            "appareils": appareils,
+            "cle_session_actuelle": request.session.session_key,
+            "limite": 5,
+        },
+    )
+
+
+@login_required
+def deconnecter_appareil(request, pk):
+    appareil = get_object_or_404(AppareilConnecte, pk=pk, utilisateur=request.user)
+    if request.method == "POST":
+        Session.objects.filter(session_key=appareil.cle_session).delete()
+        est_soi_meme = appareil.cle_session == request.session.session_key
+        appareil.delete()
+        messages.success(request, "Appareil déconnecté.")
+        if est_soi_meme:
+            return redirect("login")
+    return redirect("mes_appareils")
+
+
+# ---------------------------------------------------------------------------
+# Rapport journalier
+# ---------------------------------------------------------------------------
+@login_required
+def rapport_journalier_list(request):
+    exploitation = get_exploitation_courante(request)
+    rapports = (
+        RapportJournalier.objects.filter(exploitation=exploitation)
+        if exploitation else RapportJournalier.objects.none()
+    )
+    rapports = filtrer_par_periode(request, rapports)
+    return render(
+        request,
+        "rapports/rapport_journalier_list.html",
+        {"rapports": rapports, "exploitation": exploitation},
+    )
+
+
+@login_required
+def rapport_journalier_detail(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    return render(request, "rapports/rapport_journalier_detail.html", {"rapport": rapport})
+
+
+@login_required
+def rapport_journalier_create(request):
+    exploitation = get_exploitation_courante(request)
+    if not exploitation:
+        messages.warning(request, "Créez d'abord une exploitation.")
+        return redirect("exploitation_creer")
+    if not exploitation.date_arrivee_sujets:
+        messages.warning(
+            request,
+            "Renseignez d'abord la date d'arrivée des sujets sur votre exploitation "
+            "(nécessaire pour calculer automatiquement l'âge en jours).",
+        )
+        return redirect("exploitation_modifier", pk=exploitation.pk)
+
+    if request.method == "POST":
+        form = RapportJournalierForm(request.POST)
+        if form.is_valid():
+            rapport = form.save(commit=False)
+            rapport.exploitation = exploitation
+            rapport.save()
+            messages.success(request, "Rapport journalier enregistré.")
+            return redirect("rapport_journalier_detail", pk=rapport.pk)
+    else:
+        form = RapportJournalierForm(initial={"date": timezone.localdate()})
+    return render(
+        request,
+        "rapports/rapport_journalier_form.html",
+        {"form": form, "titre": "Nouveau rapport journalier", "exploitation": exploitation},
+    )
+
+
+@login_required
+def rapport_journalier_update(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    if request.method == "POST":
+        form = RapportJournalierForm(request.POST, instance=rapport)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Rapport journalier mis à jour.")
+            return redirect("rapport_journalier_detail", pk=rapport.pk)
+    else:
+        form = RapportJournalierForm(instance=rapport)
+    return render(
+        request,
+        "rapports/rapport_journalier_form.html",
+        {"form": form, "titre": "Modifier le rapport journalier", "exploitation": rapport.exploitation, "rapport": rapport},
+    )
+
+
+@login_required
+def rapport_journalier_delete(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    if request.method == "POST":
+        rapport.delete()
+        messages.success(request, "Rapport journalier supprimé.")
+        return redirect("rapport_journalier_list")
+    return render(request, "rapports/confirmer_suppression.html", {"objet": rapport})
+
+
+@login_required
+def rapport_journalier_imprimer(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    contexte = {
+        "rapport": rapport,
+        "exploitation": rapport.exploitation,
+        "url_retour": reverse("rapport_journalier_detail", args=[rapport.pk]),
+    }
+    return render(request, "rapports/print/rapport_journalier.html", contexte)
+
+
+@login_required
+def rapport_journalier_pdf(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    nom = f"rapport_journalier_{rapport.date}.pdf"
+    return render_to_pdf(
+        "rapports/print/rapport_journalier.html",
+        {"rapport": rapport, "exploitation": rapport.exploitation},
+        nom_fichier=nom,
+    )
+
+
+@login_required
+def rapport_journalier_liste_imprimer(request):
+    exploitation = get_exploitation_courante(request)
+    rapports = (
+        RapportJournalier.objects.filter(exploitation=exploitation)
+        if exploitation else RapportJournalier.objects.none()
+    )
+    rapports = filtrer_par_periode(request, rapports)
+    contexte = {
+        "rapports": rapports.order_by("date"),
+        "exploitation": exploitation,
+        "url_retour": reverse("rapport_journalier_list"),
+    }
+    return render(request, "rapports/print/rapport_journalier_liste.html", contexte)
+
+
+@login_required
+def rapport_journalier_liste_pdf(request):
+    exploitation = get_exploitation_courante(request)
+    rapports = (
+        RapportJournalier.objects.filter(exploitation=exploitation)
+        if exploitation else RapportJournalier.objects.none()
+    )
+    rapports = filtrer_par_periode(request, rapports)
+    return render_to_pdf(
+        "rapports/print/rapport_journalier_liste.html",
+        {"rapports": rapports.order_by("date"), "exploitation": exploitation},
+        nom_fichier="historique_rapports_journaliers.pdf",
+    )
+
+
+@login_required
+def rapport_journalier_drive(request, pk):
+    rapport = get_object_or_404(RapportJournalier, pk=pk, exploitation__proprietaire=request.user)
+    nom_fichier = f"rapport_journalier_{rapport.date}.pdf"
+    return _envoyer_vers_drive(
+        request, rapport.exploitation, "Rapports journaliers", nom_fichier,
+        "rapports/print/rapport_journalier.html", {"rapport": rapport, "exploitation": rapport.exploitation},
     )

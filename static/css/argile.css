@@ -56,6 +56,7 @@ body {
 .navbar-argile .nav-link.texte-vert-clair.active  { color: #b6e388 !important; }
 .navbar-argile .nav-link.texte-oeuf.active        { color: #ffb703 !important; }
 .navbar-argile .nav-link.texte-exploitation.active{ color: #ffffff !important; }
+.navbar-argile .nav-link.texte-journalier.active  { color: #8ecae6 !important; }
 
 /* ---------- Bandeau d'en-tête (façon "hero" nature) ---------- */
 .argile-hero {

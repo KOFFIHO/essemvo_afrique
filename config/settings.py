@@ -4,6 +4,7 @@ Réglages Django pour le projet ARGILE
 """
 
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -95,4 +96,14 @@ LOGOUT_REDIRECT_URL = "login"
 # --- Infos affichées dans le pied de page ------------------------------------
 SITE_NAME = "ARGILE"
 SITE_BASELINE = "La Mémoire du Fermier — Plateforme de rapports d'élevage"
+
+# --- Intégration Google Drive (OAuth2) --------------------------------------
+# Ces 2 valeurs viennent de Google Cloud Console (identifiant OAuth "Application
+# Web") — voir le README pour la marche à suivre. Ne jamais commiter ces
+# secrets : passez-les en variables d'environnement en production.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
+    "GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/drive/callback/"
+)
 SOCIETE = "ESSEMVO AFRIQUE — Bp 79 Man, Côte d'Ivoire — (+225) 07 47 56 97 05"

@@ -1,0 +1,45 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Mes appareils connectés{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-laptop"></i> Mes appareils connectés</h2>
+    <span class="badge badge-argile fs-6">{{ appareils|length }} / {{ limite }}</span>
+</div>
+
+<p class="text-muted">
+    Pour des raisons de sécurité, un même compte ne peut être connecté que sur
+    <strong>{{ limite }} appareils</strong> à la fois. Au-delà, l'appareil le
+    plus ancien est automatiquement déconnecté à la connexion suivante.
+</p>
+
+<div class="card card-argile">
+    <div class="table-responsive">
+        <table class="table table-argile mb-0">
+            <thead>
+                <tr><th>Appareil / navigateur</th><th>Adresse IP</th><th>Connecté depuis</th><th>Dernière activité</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for a in appareils %}
+                <tr class="{% if a.cle_session == cle_session_actuelle %}table-success{% endif %}">
+                    <td>
+                        {{ a.agent_utilisateur|default:"Appareil inconnu"|truncatechars:60 }}
+                        {% if a.cle_session == cle_session_actuelle %}<span class="badge badge-argile ms-1">Cet appareil</span>{% endif %}
+                    </td>
+                    <td>{{ a.adresse_ip|default:"—" }}</td>
+                    <td>{{ a.connecte_le|date:"d/m/Y H:i" }}</td>
+                    <td>{{ a.derniere_activite|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <form method="post" action="{% url 'deconnecter_appareil' a.pk %}" onsubmit="return confirm('Déconnecter cet appareil ?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Déconnecter</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucun appareil connecté.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -19,6 +19,10 @@ class Exploitation(models.Model):
     )
     localisation = models.CharField("Localisation", max_length=150, blank=True)
     effectif_initial = models.PositiveIntegerField("Effectif initial (sujets)", default=0)
+    date_arrivee_sujets = models.DateTimeField(
+        "Date et heure d'arrivée des sujets", null=True, blank=True,
+        help_text="Sert à calculer automatiquement l'âge des sujets (en jours) sur toutes les fiches.",
+    )
     date_creation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -28,6 +32,36 @@ class Exploitation(models.Model):
 
     def __str__(self):
         return self.nom
+
+    @property
+    def dimensions_logo_pdf(self):
+        """
+        Calcule (largeur, hauteur) en pixels pour le logo dans l'en-tête PDF,
+        en conservant strictement les proportions d'origine du fichier
+        (xhtml2pdf déforme parfois une image si seule la hauteur CSS est
+        précisée : on fixe donc explicitement largeur ET hauteur, calculées
+        depuis les dimensions réelles).
+        """
+        if not self.logo:
+            return None
+        try:
+            from PIL import Image as ImagePIL
+
+            with self.logo.open("rb") as fichier:
+                image = ImagePIL.open(fichier)
+                largeur_orig, hauteur_orig = image.size
+        except Exception:
+            return None
+
+        if not largeur_orig or not hauteur_orig:
+            return None
+
+        hauteur_max, largeur_max = 42, 130
+        ratio = min(hauteur_max / hauteur_orig, largeur_max / largeur_orig, 1)
+        return {
+            "largeur": max(1, round(largeur_orig * ratio)),
+            "hauteur": max(1, round(hauteur_orig * ratio)),
+        }
 
 
 class TypeEauChoices(models.TextChoices):
@@ -43,7 +77,6 @@ class FicheVaccinationEauBoisson(models.Model):
     )
     numero_fiche = models.PositiveIntegerField("N° de la fiche")
     date = models.DateField("Date")
-    age_sujets = models.CharField("Âge des sujets", max_length=50)
     nombre_sujets = models.PositiveIntegerField("Nombre de sujets")
     nombre_doses_utilise = models.PositiveIntegerField("Nombre de doses utilisées")
 
@@ -64,9 +97,6 @@ class FicheVaccinationEauBoisson(models.Model):
     heure_abreuvement_fin = models.TimeField("Heure d'abreuvement — fin")
 
     date_validite_vaccin = models.DateField("Date de validité du vaccin")
-    image_etiquette = models.ImageField(
-        "Image étiquette du vaccin", upload_to="etiquettes_vaccin_eau/", blank=True, null=True
-    )
     observations = models.TextField("Observations", blank=True)
     cree_le = models.DateTimeField(auto_now_add=True)
 
@@ -82,8 +112,33 @@ class FicheVaccinationEauBoisson(models.Model):
         return reverse("vaccination_eau_detail", args=[self.pk])
 
     @property
+    def age_sujets(self):
+        """Âge des sujets (en jours), calculé automatiquement depuis la date d'arrivée de l'exploitation."""
+        if not self.exploitation.date_arrivee_sujets:
+            return None
+        return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
+
+    @property
     def quantite_eau_consommee(self):
         return self.quantite_eau_initiale - self.quantite_eau_reste
+
+
+class ImageEtiquetteVaccinEau(models.Model):
+    """Une photo d'étiquette de vaccin liée à une fiche eau de boisson (plusieurs possibles par fiche)."""
+
+    fiche = models.ForeignKey(
+        FicheVaccinationEauBoisson, on_delete=models.CASCADE, related_name="images_etiquettes"
+    )
+    image = models.ImageField("Image étiquette du vaccin", upload_to="etiquettes_vaccin_eau/")
+    televerse_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Image étiquette (eau de boisson)"
+        verbose_name_plural = "Images étiquettes (eau de boisson)"
+        ordering = ["televerse_le"]
+
+    def __str__(self):
+        return f"Image étiquette — fiche n°{self.fiche.numero_fiche}"
 
 
 class FicheVaccinationInjection(models.Model):
@@ -94,7 +149,6 @@ class FicheVaccinationInjection(models.Model):
     )
     numero_fiche = models.PositiveIntegerField("N° de la fiche")
     date = models.DateField("Date")
-    age_sujets = models.CharField("Âge des sujets", max_length=50)
     nombre_sujets = models.PositiveIntegerField("Nombre de sujets")
     nombre_doses_utilise = models.PositiveIntegerField("Nombre de doses utilisées")
 
@@ -126,6 +180,13 @@ class FicheVaccinationInjection(models.Model):
 
     def get_absolute_url(self):
         return reverse("vaccination_injection_detail", args=[self.pk])
+
+    @property
+    def age_sujets(self):
+        """Âge des sujets (en jours), calculé automatiquement depuis la date d'arrivée de l'exploitation."""
+        if not self.exploitation.date_arrivee_sujets:
+            return None
+        return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
 
 
 class PoidsHebdomadaire(models.Model):
@@ -200,6 +261,48 @@ class PeseeIndividuelle(models.Model):
         return f"Sujet {self.numero_sujet} : {self.poids_grammes} g"
 
 
+class AppareilConnecte(models.Model):
+    """
+    Un appareil (session) actuellement connecté à un compte utilisateur.
+    Utilisé pour limiter le nombre de connexions simultanées par compte.
+    """
+
+    utilisateur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="appareils_connectes"
+    )
+    cle_session = models.CharField("Clé de session", max_length=40, unique=True)
+    agent_utilisateur = models.CharField("Appareil / navigateur", max_length=255, blank=True)
+    adresse_ip = models.GenericIPAddressField("Adresse IP", null=True, blank=True)
+    connecte_le = models.DateTimeField("Connecté depuis", auto_now_add=True)
+    derniere_activite = models.DateTimeField("Dernière activité", auto_now=True)
+
+    class Meta:
+        verbose_name = "Appareil connecté"
+        verbose_name_plural = "Appareils connectés"
+        ordering = ["-derniere_activite"]
+
+    def __str__(self):
+        return f"{self.utilisateur} — {self.agent_utilisateur or 'appareil inconnu'}"
+
+
+class CompteGoogleDrive(models.Model):
+    """Jetons OAuth2 permettant d'envoyer des fiches PDF vers le Google Drive de l'utilisateur."""
+
+    utilisateur = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="compte_drive"
+    )
+    jeton_acces = models.TextField("Jeton d'accès")
+    jeton_rafraichissement = models.TextField("Jeton de rafraîchissement", blank=True)
+    connecte_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Compte Google Drive"
+        verbose_name_plural = "Comptes Google Drive"
+
+    def __str__(self):
+        return f"Google Drive de {self.utilisateur}"
+
+
 class PeseeQuotidienneOeufs(models.Model):
     """Pesée quotidienne des œufs (suivi de la performance pondérale)."""
 
@@ -229,3 +332,88 @@ class PeseeQuotidienneOeufs(models.Model):
         if not self.nombre_oeufs_peses:
             return None
         return round(self.poids_total_grammes / self.nombre_oeufs_peses, 2)
+
+
+class RapportJournalier(models.Model):
+    """
+    FICHE DES RAPPORTS JOURNALIERS POUR LES POULES PONDEUSES.
+    Un enregistrement par jour et par exploitation.
+    """
+
+    exploitation = models.ForeignKey(
+        Exploitation, on_delete=models.CASCADE, related_name="rapports_journaliers"
+    )
+    date = models.DateField("Date")
+
+    mortalite_jour = models.PositiveIntegerField("Mortalité de la journée", default=0)
+    # Calculé automatiquement à l'enregistrement (voir save()) — jamais saisi à la main.
+    effectif_restant = models.PositiveIntegerField("Effectif restant", editable=False, default=0)
+
+    conso_aliments_kg = models.DecimalField(
+        "Consommation en aliments (kg)", max_digits=7, decimal_places=2, null=True, blank=True
+    )
+    conso_eau_litres = models.DecimalField(
+        "Consommation en eau (L)", max_digits=7, decimal_places=2, null=True, blank=True
+    )
+    production_oeufs_plaquettes = models.DecimalField(
+        "Production d'œufs (plaquettes)", max_digits=6, decimal_places=1, null=True, blank=True
+    )
+    nombre_oeufs_casses = models.PositiveIntegerField("Nombre d'œufs cassés", null=True, blank=True)
+    poids_moyen_oeufs = models.DecimalField(
+        "Poids moyen des œufs (g)", max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    protocole_traitement_vaccination = models.TextField(
+        "Protocoles de traitement et de vaccination", blank=True
+    )
+
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Rapport journalier"
+        verbose_name_plural = "Rapports journaliers"
+        ordering = ["-date"]
+        unique_together = ("exploitation", "date")
+
+    def __str__(self):
+        return f"Rapport du {self.date} — {self.exploitation}"
+
+    def get_absolute_url(self):
+        return reverse("rapport_journalier_detail", args=[self.pk])
+
+    @property
+    def age_jour(self):
+        """Âge en jours, calculé depuis la date d'arrivée des sujets de l'exploitation."""
+        if not self.exploitation.date_arrivee_sujets:
+            return None
+        return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
+
+    @property
+    def effectif_depart(self):
+        """Effectif de départ : celui de l'exploitation, identique sur toute la durée du lot."""
+        return self.exploitation.effectif_initial
+
+    def _calculer_effectif_restant(self):
+        precedent = (
+            RapportJournalier.objects.filter(exploitation=self.exploitation, date__lt=self.date)
+            .exclude(pk=self.pk)
+            .order_by("-date")
+            .first()
+        )
+        base = precedent.effectif_restant if precedent else self.exploitation.effectif_initial
+        return max(0, base - self.mortalite_jour)
+
+    def save(self, *args, **kwargs):
+        self.effectif_restant = self._calculer_effectif_restant()
+        super().save(*args, **kwargs)
+
+        # Recalcule en cascade les jours suivants (utile si on modifie
+        # la mortalité d'un jour déjà passé : tous les jours après doivent
+        # être recalculés à partir du nouvel effectif restant).
+        base = self.effectif_restant
+        for suivant in RapportJournalier.objects.filter(
+            exploitation=self.exploitation, date__gt=self.date
+        ).order_by("date"):
+            nouveau = max(0, base - suivant.mortalite_jour)
+            if nouveau != suivant.effectif_restant:
+                RapportJournalier.objects.filter(pk=suivant.pk).update(effectif_restant=nouveau)
+            base = nouveau

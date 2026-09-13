@@ -1,0 +1,48 @@
+{% extends "rapports/print/base_pdf.html" %}
+{% block titre %}Rapport du {{ rapport.date|date:"d/m/Y" }}{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    {% if url_retour %}<a href="{{ url_retour }}" class="retour">← Retour</a>{% endif %}
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <a href="{% url 'rapport_journalier_pdf' rapport.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
+</div>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">RAPPORT JOURNALIER — {{ rapport.date|date:"d/m/Y" }}</div>
+
+<table class="fiche">
+    <thead>
+        <tr>
+            <th>DATE</th><th>ÂGE<br>(JOURS)</th><th>EFFECTIF<br>DE DÉPART</th>
+            <th>MORTALITÉ<br>DE LA JOURNÉE</th><th>EFFECTIF<br>RESTANT</th>
+            <th>CONSO.<br>ALIMENTS (kg)</th><th>CONSO.<br>EAU (L)</th>
+            <th>PRODUCTION<br>D'ŒUFS (plaquettes)</th><th>ŒUFS<br>CASSÉS</th><th>POIDS MOYEN<br>DES ŒUFS (g)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ rapport.date|date:"d/m/Y" }}</td>
+            <td>{{ rapport.age_jour|default:"—" }}</td>
+            <td>{{ rapport.effectif_depart }}</td>
+            <td>{{ rapport.mortalite_jour }}</td>
+            <td>{{ rapport.effectif_restant }}</td>
+            <td>{{ rapport.conso_aliments_kg|default:"—" }}</td>
+            <td>{{ rapport.conso_eau_litres|default:"—" }}</td>
+            <td>{{ rapport.production_oeufs_plaquettes|default:"—" }}</td>
+            <td>{{ rapport.nombre_oeufs_casses|default:"—" }}</td>
+            <td>{{ rapport.poids_moyen_oeufs|default:"—" }}</td>
+        </tr>
+    </tbody>
+</table>
+
+{% if rapport.protocole_traitement_vaccination %}
+<table class="fiche">
+    <tr>
+        <td class="libelle">PROTOCOLES DE TRAITEMENT<br>ET DE VACCINATION</td>
+        <td style="text-align:left; white-space:pre-line;">{{ rapport.protocole_traitement_vaccination }}</td>
+    </tr>
+</table>
+{% endif %}
+{% endblock %}

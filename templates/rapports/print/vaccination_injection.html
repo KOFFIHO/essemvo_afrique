@@ -1,9 +1,11 @@
 {% extends "rapports/print/base_pdf.html" %}
+{% load argile_extras %}
 
 {% block titre %}Fiche injection n°{{ fiche.numero_fiche }}{% endblock %}
 
 {% block barre_actions %}
 <div class="barre-actions no-print">
+    {% if url_retour %}<a href="{{ url_retour }}" class="retour">← Retour</a>{% endif %}
     <button onclick="window.print()">🖨️ Imprimer</button>
     <a href="{% url 'vaccination_injection_pdf' fiche.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
 </div>
@@ -52,7 +54,7 @@
     <tr>
         <td class="libelle">IMAGE ÉTIQUETTE<br>DU VACCIN</td>
         <td style="text-align:center;">
-            <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" style="max-height:160px; max-width:260px;">
+            <img src="{{ fiche.image_etiquette|image_base64 }}" alt="Étiquette du vaccin" style="max-height:160px; max-width:260px;">
         </td>
     </tr>
 </table>

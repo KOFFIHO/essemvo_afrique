@@ -1,12 +1,16 @@
 from django.contrib import admin
 
 from .models import (
+    AppareilConnecte,
+    CompteGoogleDrive,
     Exploitation,
     FicheVaccinationEauBoisson,
     FicheVaccinationInjection,
+    ImageEtiquetteVaccinEau,
     PeseeIndividuelle,
     PeseeQuotidienneOeufs,
     PoidsHebdomadaire,
+    RapportJournalier,
 )
 
 
@@ -14,6 +18,11 @@ from .models import (
 class ExploitationAdmin(admin.ModelAdmin):
     list_display = ("nom", "proprietaire", "localisation", "effectif_initial", "date_creation")
     search_fields = ("nom", "localisation")
+
+
+class ImageEtiquetteVaccinEauInline(admin.TabularInline):
+    model = ImageEtiquetteVaccinEau
+    extra = 1
 
 
 @admin.register(FicheVaccinationEauBoisson)
@@ -24,6 +33,7 @@ class FicheVaccinationEauBoissonAdmin(admin.ModelAdmin):
     )
     list_filter = ("exploitation", "type_eau_utilisee", "date")
     search_fields = ("vaccin_utilise",)
+    inlines = [ImageEtiquetteVaccinEauInline]
 
 
 @admin.register(FicheVaccinationInjection)
@@ -54,3 +64,26 @@ class PeseeQuotidienneOeufsAdmin(admin.ModelAdmin):
         "poids_total_grammes", "poids_moyen_oeuf",
     )
     list_filter = ("exploitation",)
+
+
+@admin.register(CompteGoogleDrive)
+class CompteGoogleDriveAdmin(admin.ModelAdmin):
+    list_display = ("utilisateur", "connecte_le")
+    readonly_fields = ("jeton_acces", "jeton_rafraichissement", "connecte_le")
+
+
+@admin.register(AppareilConnecte)
+class AppareilConnecteAdmin(admin.ModelAdmin):
+    list_display = ("utilisateur", "agent_utilisateur", "adresse_ip", "connecte_le", "derniere_activite")
+    list_filter = ("utilisateur",)
+    readonly_fields = ("cle_session", "connecte_le", "derniere_activite")
+
+
+@admin.register(RapportJournalier)
+class RapportJournalierAdmin(admin.ModelAdmin):
+    list_display = (
+        "date", "exploitation", "age_jour", "effectif_depart",
+        "mortalite_jour", "effectif_restant",
+    )
+    list_filter = ("exploitation",)
+    readonly_fields = ("effectif_restant",)

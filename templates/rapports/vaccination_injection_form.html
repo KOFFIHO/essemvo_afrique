@@ -11,7 +11,8 @@
     <fieldset class="fieldset-argile">
         <legend>Identification</legend>
         <p class="text-muted small mb-3">
-            <i class="bi bi-info-circle"></i> Le N° de fiche est attribué automatiquement à l'enregistrement.
+            <i class="bi bi-info-circle"></i> Le N° de fiche et l'âge des sujets sont calculés automatiquement
+            (l'âge dépend de la date d'arrivée des sujets renseignée sur l'exploitation).
         </p>
         <div class="row g-3">
             <div class="col-md-4">
@@ -19,8 +20,9 @@
                 {{ form.date }}
             </div>
             <div class="col-md-4">
-                <label class="form-label">{{ form.age_sujets.label }}</label>
-                {{ form.age_sujets }}
+                <label class="form-label">Âge des sujets</label>
+                <input type="text" class="form-control" disabled
+                       value="{% if fiche and fiche.age_sujets is not None %}{{ fiche.age_sujets }} jour(s){% else %}Calculé automatiquement{% endif %}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">{{ form.nombre_sujets.label }}</label>

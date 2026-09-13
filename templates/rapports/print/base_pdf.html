@@ -1,4 +1,5 @@
 {% load static %}
+{% load argile_extras %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -29,10 +30,11 @@
         background-color: #e6f4ea;
     }
     .entete-societe img.logo-ferme {
-        height: 42px;
+        max-height: 42px;
+        max-width: 130px;
         vertical-align: middle;
         margin-right: 10px;
-        border-radius: 50%;
+        border-radius: 6px;
     }
     .entete-societe .sous-titre {
         font-weight: normal;
@@ -73,6 +75,23 @@
         text-align: left;
         width: 28%;
     }
+    table.grille-images {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 14px;
+        table-layout: fixed;
+    }
+    table.grille-images td {
+        width: 50%;
+        border: 1px solid #cfe3d2;
+        text-align: center;
+        vertical-align: middle;
+        padding: 6px;
+    }
+    table.grille-images img {
+        max-width: 100%;
+        max-height: 160px;
+    }
     .bloc-signature {
         width: 100%;
         margin-top: 30px;
@@ -111,6 +130,9 @@
     .barre-actions a.secondaire {
         background-color: #6b4f2a;
     }
+    .barre-actions a.retour {
+        background-color: #5a6b57;
+    }
     @media print {
         .no-print { display: none !important; }
         body { margin: 0; }
@@ -124,9 +146,12 @@
 
 <div class="entete-societe">
     {% if exploitation.logo %}
-        <img src="{{ exploitation.logo.url }}" alt="Logo" class="logo-ferme">
+        {% with dim=exploitation.dimensions_logo_pdf %}
+        <img src="{{ exploitation.logo|image_base64 }}" alt="Logo" class="logo-ferme"
+             {% if dim %}width="{{ dim.largeur }}" height="{{ dim.hauteur }}"{% endif %}>
+        {% endwith %}
     {% endif %}
-    {{ exploitation.nom|default:"Essemvo Afrique — La Mémoire du Fermier" }}
+    {{ exploitation.nom|default:"ARGILE — La Mémoire du Fermier" }}
     {% if exploitation.localisation %} — {{ exploitation.localisation }}{% endif %}
     <div class="sous-titre">Document généré via ARGILE — ESSEMVO AFRIQUE, Bp 79 Man, Côte d'Ivoire</div>
 </div>

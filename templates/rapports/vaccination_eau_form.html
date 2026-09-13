@@ -11,7 +11,8 @@
     <fieldset class="fieldset-argile">
         <legend>Identification</legend>
         <p class="text-muted small mb-3">
-            <i class="bi bi-info-circle"></i> Le N° de fiche est attribué automatiquement à l'enregistrement.
+            <i class="bi bi-info-circle"></i> Le N° de fiche et l'âge des sujets sont calculés automatiquement
+            (l'âge dépend de la date d'arrivée des sujets renseignée sur l'exploitation).
         </p>
         <div class="row g-3">
             <div class="col-md-4">
@@ -19,8 +20,9 @@
                 {{ form.date }}
             </div>
             <div class="col-md-4">
-                <label class="form-label">{{ form.age_sujets.label }}</label>
-                {{ form.age_sujets }}
+                <label class="form-label">Âge des sujets</label>
+                <input type="text" class="form-control" disabled
+                       value="{% if fiche and fiche.age_sujets is not None %}{{ fiche.age_sujets }} jour(s){% else %}Calculé automatiquement{% endif %}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">{{ form.nombre_sujets.label }}</label>
@@ -45,13 +47,6 @@
                 {{ form.type_eau_utilisee }}
             </div>
             <div class="col-md-3">
-                <label class="form-label">{{ form.image_etiquette.label }}</label>
-                {{ form.image_etiquette }}
-                {% if form.instance.image_etiquette %}
-                    <div class="form-text">Actuelle : <a href="{{ form.instance.image_etiquette.url }}" target="_blank">voir l'image</a></div>
-                {% endif %}
-            </div>
-            <div class="col-md-3">
                 <label class="form-label">{{ form.quantite_eau_initiale.label }}</label>
                 {{ form.quantite_eau_initiale }}
             </div>
@@ -60,6 +55,28 @@
                 {{ form.quantite_eau_reste }}
             </div>
         </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Images étiquettes du vaccin</legend>
+        {% if fiche.images_etiquettes.all %}
+        <div class="row g-2 mb-3">
+            {% for img in fiche.images_etiquettes.all %}
+            <div class="col-6 col-md-3 text-center">
+                <a href="{{ img.image.url }}" target="_blank">
+                    <img src="{{ img.image.url }}" class="img-thumbnail mb-1" style="height:100px; object-fit:cover;">
+                </a>
+                <div class="form-check d-flex justify-content-center gap-1">
+                    <input class="form-check-input" type="checkbox" name="supprimer_image_{{ img.pk }}" id="supprimer_image_{{ img.pk }}">
+                    <label class="form-check-label small text-danger" for="supprimer_image_{{ img.pk }}">Retirer</label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <label class="form-label">Ajouter des images (plusieurs à la fois, 4 ou plus recommandé)</label>
+        <input type="file" name="images_etiquettes" multiple accept="image/*" class="form-control">
+        <div class="form-text">Sélectionnez plusieurs photos d'étiquette d'un coup (maintenez Ctrl / Cmd dans l'explorateur de fichiers).</div>
     </fieldset>
 
     <fieldset class="fieldset-argile">

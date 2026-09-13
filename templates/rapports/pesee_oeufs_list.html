@@ -28,6 +28,8 @@
                     <td>{{ p.poids_total_grammes }}</td>
                     <td><span class="badge badge-jaune">{{ p.poids_moyen_oeuf }} g</span></td>
                     <td>
+                        <a href="{% url 'pesee_oeufs_detail' p.pk %}" class="btn btn-sm btn-outline-argile"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'pesee_oeufs_update' p.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
                         <a href="{% url 'pesee_oeufs_delete' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
                     </td>
                 </tr>

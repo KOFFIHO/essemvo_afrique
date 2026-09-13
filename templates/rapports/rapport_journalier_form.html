@@ -1,0 +1,76 @@
+{% extends "rapports/base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<div class="d-flex align-items-center gap-2 mb-3">
+    <h2 class="mb-0"><i class="bi bi-journal-text"></i> {{ titre }}</h2>
+</div>
+
+<p class="text-muted small">
+    <i class="bi bi-info-circle"></i>
+    L'âge en jours et l'effectif restant se calculent automatiquement
+    (âge depuis la date d'arrivée des sujets renseignée sur l'exploitation ;
+    effectif restant = effectif du jour précédent − mortalité du jour).
+</p>
+
+<form method="post">
+    {% csrf_token %}
+    <fieldset class="fieldset-argile">
+        <legend>Effectif du jour</legend>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ form.date.label }}</label>
+                {{ form.date }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ form.mortalite_jour.label }}</label>
+                {{ form.mortalite_jour }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Effectif de départ (référence)</label>
+                <input type="text" class="form-control" value="{{ exploitation.effectif_initial }}" disabled>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Consommations</legend>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">{{ form.conso_aliments_kg.label }}</label>
+                {{ form.conso_aliments_kg }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">{{ form.conso_eau_litres.label }}</label>
+                {{ form.conso_eau_litres }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Production d'œufs (le cas échéant)</legend>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ form.production_oeufs_plaquettes.label }}</label>
+                {{ form.production_oeufs_plaquettes }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ form.nombre_oeufs_casses.label }}</label>
+                {{ form.nombre_oeufs_casses }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ form.poids_moyen_oeufs.label }}</label>
+                {{ form.poids_moyen_oeufs }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="fieldset-argile">
+        <legend>Protocoles</legend>
+        <label class="form-label">{{ form.protocole_traitement_vaccination.label }}</label>
+        {{ form.protocole_traitement_vaccination }}
+    </fieldset>
+
+    <button type="submit" class="btn btn-argile"><i class="bi bi-check-circle"></i> Enregistrer</button>
+    <a href="{% url 'rapport_journalier_list' %}" class="btn btn-outline-secondary">Annuler</a>
+</form>
+{% endblock %}

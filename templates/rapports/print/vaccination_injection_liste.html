@@ -3,6 +3,7 @@
 
 {% block barre_actions %}
 <div class="barre-actions no-print">
+    {% if url_retour %}<a href="{{ url_retour }}" class="retour">← Retour</a>{% endif %}
     <button onclick="window.print()">🖨️ Imprimer</button>
 </div>
 {% endblock %}

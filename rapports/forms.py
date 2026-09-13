@@ -8,6 +8,7 @@ from .models import (
     PeseeIndividuelle,
     PeseeQuotidienneOeufs,
     PoidsHebdomadaire,
+    RapportJournalier,
 )
 
 
@@ -28,9 +29,10 @@ class BootstrapFormMixin:
 class ExploitationForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Exploitation
-        fields = ["nom", "logo", "localisation", "effectif_initial"]
+        fields = ["nom", "logo", "localisation", "effectif_initial", "date_arrivee_sujets"]
         widgets = {
             "logo": forms.ClearableFileInput(attrs={"accept": "image/*"}),
+            "date_arrivee_sujets": forms.DateTimeInput(attrs={"type": "datetime-local"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -42,6 +44,7 @@ class FicheVaccinationEauBoissonForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = FicheVaccinationEauBoisson
         # numero_fiche est calculé automatiquement (voir la vue de création) : jamais dans le formulaire.
+        # Les images d'étiquette sont gérées séparément (upload multiple, voir la vue).
         exclude = ["exploitation", "cree_le", "numero_fiche"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
@@ -51,7 +54,6 @@ class FicheVaccinationEauBoissonForm(BootstrapFormMixin, forms.ModelForm):
             "heure_abreuvement_debut": forms.TimeInput(attrs={"type": "time"}),
             "heure_abreuvement_fin": forms.TimeInput(attrs={"type": "time"}),
             "observations": forms.Textarea(attrs={"rows": 3}),
-            "image_etiquette": forms.ClearableFileInput(attrs={"accept": "image/*"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -124,6 +126,21 @@ class PeseeQuotidienneOeufsForm(BootstrapFormMixin, forms.ModelForm):
             "date": forms.DateInput(attrs={"type": "date"}),
             "heure_pesee": forms.TimeInput(attrs={"type": "time"}),
             "observations": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bootstrapper()
+
+
+class RapportJournalierForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = RapportJournalier
+        # exploitation et effectif_restant sont gérés automatiquement (jamais dans le formulaire).
+        exclude = ["exploitation", "effectif_restant", "cree_le"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+            "protocole_traitement_vaccination": forms.Textarea(attrs={"rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):

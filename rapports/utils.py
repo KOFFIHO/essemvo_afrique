@@ -42,12 +42,11 @@ def _lien_vers_fichier(uri, rel):
     return chemin
 
 
-def render_to_pdf(template_src, context_dict, nom_fichier="fiche.pdf", telecharger=True):
+def generer_pdf_bytes(template_src, context_dict):
     """
-    Rend `template_src` avec `context_dict` puis retourne une HttpResponse
-    contenant le PDF généré. Si `telecharger` est True, le PDF est proposé
-    en téléchargement (Content-Disposition: attachment), sinon il s'ouvre
-    directement dans le navigateur (utile pour un aperçu avant impression).
+    Rend `template_src` avec `context_dict` et retourne le contenu du PDF
+    sous forme d'octets (ou None en cas d'échec). Utilisé à la fois par
+    `render_to_pdf` (téléchargement direct) et par l'envoi vers Google Drive.
     """
     template = get_template(template_src)
     html = template.render(context_dict)
@@ -61,9 +60,22 @@ def render_to_pdf(template_src, context_dict, nom_fichier="fiche.pdf", telecharg
     )
 
     if pdf.err:
+        return None
+    return resultat.getvalue()
+
+
+def render_to_pdf(template_src, context_dict, nom_fichier="fiche.pdf", telecharger=True):
+    """
+    Rend `template_src` avec `context_dict` puis retourne une HttpResponse
+    contenant le PDF généré. Si `telecharger` est True, le PDF est proposé
+    en téléchargement (Content-Disposition: attachment), sinon il s'ouvre
+    directement dans le navigateur (utile pour un aperçu avant impression).
+    """
+    contenu = generer_pdf_bytes(template_src, context_dict)
+    if contenu is None:
         return HttpResponse("Erreur lors de la génération du PDF.", status=500)
 
-    reponse = HttpResponse(resultat.getvalue(), content_type="application/pdf")
+    reponse = HttpResponse(contenu, content_type="application/pdf")
     disposition = "attachment" if telecharger else "inline"
     reponse["Content-Disposition"] = f'{disposition}; filename="{nom_fichier}"'
     return reponse

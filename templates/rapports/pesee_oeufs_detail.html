@@ -1,0 +1,30 @@
+{% extends "rapports/base.html" %}
+{% block titre %}Pesée du {{ pesee.date|date:"d/m/Y" }}{% endblock %}
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-egg"></i> Pesée du {{ pesee.date|date:"d/m/Y" }}</h2>
+    <div>
+        <a href="{% url 'pesee_oeufs_imprimer_unique' pesee.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
+        <a href="{% url 'pesee_oeufs_pdf_unique' pesee.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'pesee_oeufs_drive_unique' pesee.pk %}" class="btn btn-outline-argile"><i class="bi bi-cloud-arrow-up"></i> Drive</a>
+        <a href="{% url 'pesee_oeufs_update' pesee.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'pesee_oeufs_delete' pesee.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
+    </div>
+</div>
+
+<div class="card card-argile card-jaune p-4">
+    <div class="row">
+        <div class="col-md-4"><p><strong>Date :</strong> {{ pesee.date|date:"d/m/Y" }}</p></div>
+        <div class="col-md-4"><p><strong>Heure de pesée :</strong> {{ pesee.heure_pesee }}</p></div>
+        <div class="col-md-4"><p><strong>Nombre d'œufs pesés :</strong> {{ pesee.nombre_oeufs_peses }}</p></div>
+    </div>
+    <div class="row">
+        <div class="col-md-4"><p><strong>Poids total :</strong> {{ pesee.poids_total_grammes }} g</p></div>
+        <div class="col-md-4"><p><strong>Poids moyen / œuf :</strong> <span class="badge badge-jaune">{{ pesee.poids_moyen_oeuf }} g</span></p></div>
+    </div>
+    {% if pesee.observations %}
+    <hr>
+    <p><strong>Observations :</strong> {{ pesee.observations }}</p>
+    {% endif %}
+</div>
+{% endblock %}

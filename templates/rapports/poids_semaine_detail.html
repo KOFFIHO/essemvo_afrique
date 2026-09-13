@@ -6,6 +6,7 @@
     <div>
         <a href="{% url 'poids_semaine_imprimer' semaine.pk %}" target="_blank" class="btn btn-argile"><i class="bi bi-printer"></i> Imprimer</a>
         <a href="{% url 'poids_semaine_pdf' semaine.pk %}" class="btn btn-outline-argile"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'poids_semaine_drive' semaine.pk %}" class="btn btn-outline-argile"><i class="bi bi-cloud-arrow-up"></i> Drive</a>
         <a href="{% url 'poids_semaine_update' semaine.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Modifier</a>
         <a href="{% url 'poids_semaine_delete' semaine.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
     </div>

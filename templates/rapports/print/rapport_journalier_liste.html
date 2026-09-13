@@ -1,0 +1,49 @@
+{% extends "rapports/print/base_pdf.html" %}
+{% block titre %}Historique — rapports journaliers{% endblock %}
+
+{% block barre_actions %}
+<div class="barre-actions no-print">
+    {% if url_retour %}<a href="{{ url_retour }}" class="retour">← Retour</a>{% endif %}
+    <button onclick="window.print()">🖨️ Imprimer</button>
+</div>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    table.historique-journalier th, table.historique-journalier td { font-size: 9px; padding: 3px; }
+</style>
+{% endblock %}
+
+{% block contenu_fiche %}
+<div class="titre-fiche">FICHE DES RAPPORTS JOURNALIERS POUR LES POULES PONDEUSES</div>
+
+<table class="fiche historique-journalier">
+    <thead>
+        <tr>
+            <th>DATE</th><th>ÂGE<br>(j)</th><th>EFFECTIF<br>DÉPART</th><th>MORTALITÉ<br>JOUR</th>
+            <th>EFFECTIF<br>RESTANT</th><th>ALIMENTS<br>(kg)</th><th>EAU<br>(L)</th>
+            <th>PROD. ŒUFS<br>(plaquettes)</th><th>ŒUFS<br>CASSÉS</th><th>POIDS MOYEN<br>ŒUFS (g)</th>
+            <th>PROTOCOLES</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rapports %}
+        <tr>
+            <td>{{ r.date|date:"d/m/Y" }}</td>
+            <td>{{ r.age_jour|default:"—" }}</td>
+            <td>{{ r.effectif_depart }}</td>
+            <td>{{ r.mortalite_jour }}</td>
+            <td>{{ r.effectif_restant }}</td>
+            <td>{{ r.conso_aliments_kg|default:"—" }}</td>
+            <td>{{ r.conso_eau_litres|default:"—" }}</td>
+            <td>{{ r.production_oeufs_plaquettes|default:"—" }}</td>
+            <td>{{ r.nombre_oeufs_casses|default:"—" }}</td>
+            <td>{{ r.poids_moyen_oeufs|default:"—" }}</td>
+            <td style="text-align:left;">{{ r.protocole_traitement_vaccination|default:"—"|truncatechars:60 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11">Aucun rapport pour la période sélectionnée.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

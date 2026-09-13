@@ -1,9 +1,11 @@
 {% extends "rapports/print/base_pdf.html" %}
+{% load argile_extras %}
 
 {% block titre %}Fiche eau de boisson n°{{ fiche.numero_fiche }}{% endblock %}
 
 {% block barre_actions %}
 <div class="barre-actions no-print">
+    {% if url_retour %}<a href="{{ url_retour }}" class="retour">← Retour</a>{% endif %}
     <button onclick="window.print()">🖨️ Imprimer</button>
     <a href="{% url 'vaccination_eau_pdf' fiche.pk %}" class="secondaire">⬇️ Télécharger le PDF</a>
 </div>
@@ -55,14 +57,21 @@
     </tbody>
 </table>
 
-{% if fiche.image_etiquette %}
+{% if images_paires %}
 <table class="fiche">
     <tr>
-        <td class="libelle">IMAGE ÉTIQUETTE<br>DU VACCIN</td>
-        <td style="text-align:center;">
-            <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" style="max-height:160px; max-width:260px;">
-        </td>
+        <td class="libelle" colspan="2">IMAGES ÉTIQUETTES DU VACCIN</td>
     </tr>
+</table>
+<table class="grille-images">
+    {% for paire in images_paires %}
+    <tr>
+        {% for img in paire %}
+        <td><img src="{{ img.image|image_base64 }}" alt="Étiquette du vaccin"></td>
+        {% endfor %}
+        {% if paire|length == 1 %}<td>&nbsp;</td>{% endif %}
+    </tr>
+    {% endfor %}
 </table>
 {% endif %}
 
