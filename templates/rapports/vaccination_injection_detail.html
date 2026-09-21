@@ -32,12 +32,18 @@
     <hr>
     <p><strong>Observations :</strong> {{ fiche.observations }}</p>
     {% endif %}
-    {% if fiche.image_etiquette %}
+    {% if fiche.images_etiquettes.all %}
     <hr>
-    <p class="mb-2"><strong>Image étiquette du vaccin :</strong></p>
-    <a href="{{ fiche.image_etiquette.url }}" target="_blank">
-        <img src="{{ fiche.image_etiquette.url }}" alt="Étiquette du vaccin" class="img-thumbnail" style="max-width: 260px;">
-    </a>
+    <p class="mb-2"><strong>Images étiquettes du vaccin :</strong></p>
+    <div class="row g-2">
+        {% for img in fiche.images_etiquettes.all %}
+        <div class="col-6 col-md-3">
+            <a href="{{ img.image.url }}" target="_blank">
+                <img src="{{ img.image.url }}" alt="Étiquette du vaccin" class="img-thumbnail" style="height:140px; width:100%; object-fit:cover;">
+            </a>
+        </div>
+        {% endfor %}
+    </div>
     {% endif %}
 </div>
 {% endblock %}

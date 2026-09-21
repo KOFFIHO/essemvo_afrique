@@ -7,6 +7,7 @@ from .models import (
     FicheVaccinationEauBoisson,
     FicheVaccinationInjection,
     ImageEtiquetteVaccinEau,
+    ImageEtiquetteVaccinInjection,
     PeseeIndividuelle,
     PeseeQuotidienneOeufs,
     PoidsHebdomadaire,
@@ -36,6 +37,11 @@ class FicheVaccinationEauBoissonAdmin(admin.ModelAdmin):
     inlines = [ImageEtiquetteVaccinEauInline]
 
 
+class ImageEtiquetteVaccinInjectionInline(admin.TabularInline):
+    model = ImageEtiquetteVaccinInjection
+    extra = 1
+
+
 @admin.register(FicheVaccinationInjection)
 class FicheVaccinationInjectionAdmin(admin.ModelAdmin):
     list_display = (
@@ -43,6 +49,7 @@ class FicheVaccinationInjectionAdmin(admin.ModelAdmin):
         "nombre_sujets", "date_validite_vaccin",
     )
     list_filter = ("exploitation", "date")
+    inlines = [ImageEtiquetteVaccinInjectionInline]
 
 
 class PeseeIndividuelleInline(admin.TabularInline):

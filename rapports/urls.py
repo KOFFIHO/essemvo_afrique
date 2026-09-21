@@ -9,6 +9,7 @@ urlpatterns = [
     path("exploitations/", views.liste_exploitations, name="exploitation_list"),
     path("exploitations/nouvelle/", views.creer_exploitation, name="exploitation_creer"),
     path("exploitations/<int:pk>/modifier/", views.modifier_exploitation, name="exploitation_modifier"),
+    path("exploitations/<int:pk>/supprimer/", views.supprimer_exploitation, name="exploitation_supprimer"),
     path("exploitations/<int:pk>/choisir/", views.choisir_exploitation, name="exploitation_choisir"),
 
     # Vaccination — eau de boisson

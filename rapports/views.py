@@ -24,6 +24,7 @@ from .models import (
     FicheVaccinationEauBoisson,
     FicheVaccinationInjection,
     ImageEtiquetteVaccinEau,
+    ImageEtiquetteVaccinInjection,
     PeseeQuotidienneOeufs,
     PoidsHebdomadaire,
     RapportJournalier,
@@ -166,6 +167,18 @@ def modifier_exploitation(request, pk):
 
 
 @login_required
+def supprimer_exploitation(request, pk):
+    exploitation = get_object_or_404(Exploitation, pk=pk, proprietaire=request.user)
+    if request.method == "POST":
+        if request.session.get("exploitation_id") == exploitation.pk:
+            request.session.pop("exploitation_id", None)
+        exploitation.delete()
+        messages.success(request, "Exploitation supprimée.")
+        return redirect("exploitation_list")
+    return render(request, "rapports/confirmer_suppression.html", {"objet": exploitation})
+
+
+@login_required
 def choisir_exploitation(request, pk):
     exploitation = get_object_or_404(Exploitation, pk=pk, proprietaire=request.user)
     request.session["exploitation_id"] = exploitation.pk
@@ -281,6 +294,8 @@ def vaccination_injection_create(request):
             fiche.exploitation = exploitation
             fiche.numero_fiche = _prochain_numero_fiche(FicheVaccinationInjection, exploitation)
             fiche.save()
+            for image in request.FILES.getlist("images_etiquettes"):
+                ImageEtiquetteVaccinInjection.objects.create(fiche=fiche, image=image)
             messages.success(request, "Fiche de vaccination (injection) enregistrée.")
             return redirect("vaccination_injection_detail", pk=fiche.pk)
     else:
@@ -295,6 +310,15 @@ def vaccination_injection_update(request, pk):
         form = FicheVaccinationInjectionForm(request.POST, request.FILES, instance=fiche)
         if form.is_valid():
             form.save()
+            # Suppression des images cochées « à retirer »
+            for cle in request.POST:
+                if cle.startswith("supprimer_image_"):
+                    ImageEtiquetteVaccinInjection.objects.filter(
+                        pk=cle.replace("supprimer_image_", ""), fiche=fiche
+                    ).delete()
+            # Ajout des nouvelles images sélectionnées
+            for image in request.FILES.getlist("images_etiquettes"):
+                ImageEtiquetteVaccinInjection.objects.create(fiche=fiche, image=image)
             messages.success(request, "Fiche mise à jour.")
             return redirect("vaccination_injection_detail", pk=fiche.pk)
     else:
@@ -492,6 +516,7 @@ def vaccination_injection_imprimer(request, pk):
     contexte = {
         "fiche": fiche,
         "exploitation": fiche.exploitation,
+        "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
         "url_retour": reverse("vaccination_injection_detail", args=[fiche.pk]),
     }
     return render(request, "rapports/print/vaccination_injection.html", contexte)
@@ -503,7 +528,11 @@ def vaccination_injection_pdf(request, pk):
     nom = f"fiche_vaccination_injection_{fiche.numero_fiche}.pdf"
     return render_to_pdf(
         "rapports/print/vaccination_injection.html",
-        {"fiche": fiche, "exploitation": fiche.exploitation},
+        {
+            "fiche": fiche,
+            "exploitation": fiche.exploitation,
+            "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
+        },
         nom_fichier=nom,
     )
 
@@ -775,7 +804,12 @@ def vaccination_injection_drive(request, pk):
     nom_fichier = f"fiche_vaccination_injection_{fiche.numero_fiche}.pdf"
     return _envoyer_vers_drive(
         request, fiche.exploitation, "Vaccination - Injection", nom_fichier,
-        "rapports/print/vaccination_injection.html", {"fiche": fiche, "exploitation": fiche.exploitation},
+        "rapports/print/vaccination_injection.html",
+        {
+            "fiche": fiche,
+            "exploitation": fiche.exploitation,
+            "images_paires": _grouper_par_paires(fiche.images_etiquettes.all()),
+        },
     )
 
 

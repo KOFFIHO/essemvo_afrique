@@ -25,8 +25,10 @@
                        value="{% if fiche and fiche.age_sujets is not None %}{{ fiche.age_sujets }} jour(s){% else %}Calculé automatiquement{% endif %}">
             </div>
             <div class="col-md-4">
-                <label class="form-label">{{ form.nombre_sujets.label }}</label>
-                {{ form.nombre_sujets }}
+                <label class="form-label">Nombre de sujets</label>
+                <input type="text" class="form-control" disabled
+                       value="{% if fiche %}{{ fiche.nombre_sujets }}{% else %}Calculé automatiquement{% endif %}">
+                <div class="form-text">Basé sur le dernier effectif restant du rapport journalier (ou l'effectif initial de l'exploitation).</div>
             </div>
         </div>
     </fieldset>

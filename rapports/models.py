@@ -9,6 +9,39 @@ from django.db import models
 from django.urls import reverse
 
 
+def _calculer_dimensions_pdf(champ_image, hauteur_max, largeur_max):
+    """
+    Calcule (largeur, hauteur) en pixels pour une image insérée dans un PDF,
+    en conservant strictement ses proportions d'origine et en la contraignant
+    dans une boîte de hauteur_max x largeur_max.
+
+    Indispensable pour xhtml2pdf : contrairement à un navigateur, il n'applique
+    pas fiablement les règles CSS max-width/max-height sur les <img> — sans
+    dimensions explicites calculées ici, une image trop grande peut déborder
+    de la page A4 (ou faire sauter la fiche sur une deuxième page), quelle que
+    soit sa résolution ou son orientation d'origine.
+    """
+    if not champ_image:
+        return None
+    try:
+        from PIL import Image as ImagePIL
+
+        with champ_image.open("rb") as fichier:
+            image = ImagePIL.open(fichier)
+            largeur_orig, hauteur_orig = image.size
+    except Exception:
+        return None
+
+    if not largeur_orig or not hauteur_orig:
+        return None
+
+    ratio = min(hauteur_max / hauteur_orig, largeur_max / largeur_orig, 1)
+    return {
+        "largeur": max(1, round(largeur_orig * ratio)),
+        "hauteur": max(1, round(hauteur_orig * ratio)),
+    }
+
+
 class Exploitation(models.Model):
     """Le poulailler / la ferme suivie par l'utilisateur."""
 
@@ -35,33 +68,8 @@ class Exploitation(models.Model):
 
     @property
     def dimensions_logo_pdf(self):
-        """
-        Calcule (largeur, hauteur) en pixels pour le logo dans l'en-tête PDF,
-        en conservant strictement les proportions d'origine du fichier
-        (xhtml2pdf déforme parfois une image si seule la hauteur CSS est
-        précisée : on fixe donc explicitement largeur ET hauteur, calculées
-        depuis les dimensions réelles).
-        """
-        if not self.logo:
-            return None
-        try:
-            from PIL import Image as ImagePIL
-
-            with self.logo.open("rb") as fichier:
-                image = ImagePIL.open(fichier)
-                largeur_orig, hauteur_orig = image.size
-        except Exception:
-            return None
-
-        if not largeur_orig or not hauteur_orig:
-            return None
-
-        hauteur_max, largeur_max = 42, 130
-        ratio = min(hauteur_max / hauteur_orig, largeur_max / largeur_orig, 1)
-        return {
-            "largeur": max(1, round(largeur_orig * ratio)),
-            "hauteur": max(1, round(hauteur_orig * ratio)),
-        }
+        """Dimensions du logo dans l'en-tête PDF (proportions conservées)."""
+        return _calculer_dimensions_pdf(self.logo, hauteur_max=42, largeur_max=130)
 
 
 class TypeEauChoices(models.TextChoices):
@@ -77,7 +85,6 @@ class FicheVaccinationEauBoisson(models.Model):
     )
     numero_fiche = models.PositiveIntegerField("N° de la fiche")
     date = models.DateField("Date")
-    nombre_sujets = models.PositiveIntegerField("Nombre de sujets")
     nombre_doses_utilise = models.PositiveIntegerField("Nombre de doses utilisées")
 
     vaccin_utilise = models.CharField("Vaccin utilisé (nom)", max_length=150)
@@ -119,6 +126,23 @@ class FicheVaccinationEauBoisson(models.Model):
         return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
 
     @property
+    def nombre_sujets(self):
+        """
+        Nombre de sujets, calculé automatiquement : c'est l'effectif restant
+        du dernier rapport journalier connu à la date de cette fiche (qui
+        prend en compte la mortalité cumulée), ou l'effectif initial de
+        l'exploitation si aucun rapport journalier n'existe encore.
+        """
+        dernier_rapport = (
+            RapportJournalier.objects.filter(exploitation=self.exploitation, date__lte=self.date)
+            .order_by("-date")
+            .first()
+        )
+        if dernier_rapport:
+            return dernier_rapport.effectif_restant
+        return self.exploitation.effectif_initial
+
+    @property
     def quantite_eau_consommee(self):
         return self.quantite_eau_initiale - self.quantite_eau_reste
 
@@ -140,6 +164,16 @@ class ImageEtiquetteVaccinEau(models.Model):
     def __str__(self):
         return f"Image étiquette — fiche n°{self.fiche.numero_fiche}"
 
+    @property
+    def dimensions_pdf(self):
+        """
+        Dimensions contraintes pour la grille 2x2 du PDF : garantit que 4
+        images (2 en haut, 2 en bas) tiennent toujours sur une seule page
+        A4 avec le reste de la fiche, quelles que soient leurs dimensions
+        d'origine.
+        """
+        return _calculer_dimensions_pdf(self.image, hauteur_max=120, largeur_max=220)
+
 
 class FicheVaccinationInjection(models.Model):
     """FICHE DE RAPPORT DE VACCINATION ~ Injection."""
@@ -149,7 +183,6 @@ class FicheVaccinationInjection(models.Model):
     )
     numero_fiche = models.PositiveIntegerField("N° de la fiche")
     date = models.DateField("Date")
-    nombre_sujets = models.PositiveIntegerField("Nombre de sujets")
     nombre_doses_utilise = models.PositiveIntegerField("Nombre de doses utilisées")
 
     quantite_produit_ml = models.DecimalField(
@@ -158,9 +191,6 @@ class FicheVaccinationInjection(models.Model):
     nom_vaccin = models.CharField("Nom du vaccin", max_length=150, blank=True)
     produit_complementaire = models.CharField(
         "Produit complémentaire utilisé", max_length=150, blank=True
-    )
-    image_etiquette = models.ImageField(
-        "Image étiquette du vaccin", upload_to="etiquettes_vaccin_injection/", blank=True, null=True
     )
 
     heure_debut = models.TimeField("Heure de début (injection)")
@@ -188,6 +218,51 @@ class FicheVaccinationInjection(models.Model):
             return None
         return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
 
+    @property
+    def nombre_sujets(self):
+        """
+        Nombre de sujets, calculé automatiquement : c'est l'effectif restant
+        du dernier rapport journalier connu à la date de cette fiche (qui
+        prend en compte la mortalité cumulée), ou l'effectif initial de
+        l'exploitation si aucun rapport journalier n'existe encore.
+        """
+        dernier_rapport = (
+            RapportJournalier.objects.filter(exploitation=self.exploitation, date__lte=self.date)
+            .order_by("-date")
+            .first()
+        )
+        if dernier_rapport:
+            return dernier_rapport.effectif_restant
+        return self.exploitation.effectif_initial
+
+
+class ImageEtiquetteVaccinInjection(models.Model):
+    """Une photo d'étiquette de vaccin liée à une fiche injection (plusieurs possibles par fiche)."""
+
+    fiche = models.ForeignKey(
+        FicheVaccinationInjection, on_delete=models.CASCADE, related_name="images_etiquettes"
+    )
+    image = models.ImageField("Image étiquette du vaccin", upload_to="etiquettes_vaccin_injection/")
+    televerse_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Image étiquette (injection)"
+        verbose_name_plural = "Images étiquettes (injection)"
+        ordering = ["televerse_le"]
+
+    def __str__(self):
+        return f"Image étiquette — fiche n°{self.fiche.numero_fiche}"
+
+    @property
+    def dimensions_pdf(self):
+        """
+        Dimensions contraintes pour la grille 2x2 du PDF : garantit que 4
+        images (2 en haut, 2 en bas) tiennent toujours sur une seule page
+        A4 avec le reste de la fiche, quelles que soient leurs dimensions
+        d'origine.
+        """
+        return _calculer_dimensions_pdf(self.image, hauteur_max=120, largeur_max=220)
+
 
 class PoidsHebdomadaire(models.Model):
     """POIDS MOYEN HEBDOMADAIRE VISE — en-tête d'une semaine de pesée."""
@@ -195,7 +270,6 @@ class PoidsHebdomadaire(models.Model):
     exploitation = models.ForeignKey(
         Exploitation, on_delete=models.CASCADE, related_name="semaines_poids"
     )
-    semaine_numero = models.PositiveIntegerField("Semaine n°")
     date = models.DateField("Date")
     aliment_utilise = models.CharField("Aliment utilisé pour l'alimentation", max_length=150)
     poids_moyen_vise = models.DecimalField(
@@ -211,14 +285,26 @@ class PoidsHebdomadaire(models.Model):
     class Meta:
         verbose_name = "Semaine de pesée"
         verbose_name_plural = "Semaines de pesée"
-        ordering = ["exploitation", "semaine_numero"]
-        unique_together = ("exploitation", "semaine_numero")
+        ordering = ["exploitation", "date"]
+        unique_together = ("exploitation", "date")
 
     def __str__(self):
         return f"Semaine n°{self.semaine_numero} ({self.exploitation})"
 
     def get_absolute_url(self):
         return reverse("poids_semaine_detail", args=[self.pk])
+
+    @property
+    def semaine_numero(self):
+        """
+        N° de semaine calculé automatiquement depuis la date d'arrivée des
+        sujets de l'exploitation (semaine 1 = les 7 premiers jours après
+        l'arrivée, etc.).
+        """
+        if not self.exploitation.date_arrivee_sujets:
+            return None
+        jours_ecoules = (self.date - self.exploitation.date_arrivee_sujets.date()).days
+        return (jours_ecoules // 7) + 1
 
     @property
     def nombre_poussins_peses(self):

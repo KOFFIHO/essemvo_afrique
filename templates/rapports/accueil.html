@@ -74,6 +74,76 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card card-argile">
+            <div class="card-header" style="background-color:#219ebc;"><i class="bi bi-journal-text"></i> Derniers rapports journaliers</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>Date</th><th>Âge (j)</th><th>Mortalité</th><th>Effectif restant</th><th></th></tr></thead>
+                    <tbody>
+                    {% for r in derniers_rapports_journaliers %}
+                        <tr>
+                            <td>{{ r.date|date:"d/m/Y" }}</td>
+                            <td>{{ r.age_jour|default:"—" }}</td>
+                            <td>{{ r.mortalite_jour }}</td>
+                            <td>{{ r.effectif_restant }}</td>
+                            <td><a href="{% url 'rapport_journalier_detail' r.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-3">Aucun rapport pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-argile">
+            <div class="card-header"><i class="bi bi-graph-up"></i> Dernières semaines de pesée</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>Semaine n°</th><th>Date</th><th>Poids moyen réel</th><th></th></tr></thead>
+                    <tbody>
+                    {% for s in dernieres_semaines_poids %}
+                        <tr>
+                            <td>{{ s.semaine_numero }}</td>
+                            <td>{{ s.date|date:"d/m/Y" }}</td>
+                            <td>{{ s.poids_moyen_reel|default:"—" }}{% if s.poids_moyen_reel %} g{% endif %}</td>
+                            <td><a href="{% url 'poids_semaine_detail' s.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune semaine pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-argile card-jaune">
+            <div class="card-header"><i class="bi bi-egg"></i> Dernières pesées d'œufs</div>
+            <div class="card-body p-0">
+                <table class="table table-argile mb-0">
+                    <thead><tr><th>Date</th><th>Œufs pesés</th><th>Poids moyen</th><th></th></tr></thead>
+                    <tbody>
+                    {% for p in dernieres_pesees_oeufs %}
+                        <tr>
+                            <td>{{ p.date|date:"d/m/Y" }}</td>
+                            <td>{{ p.nombre_oeufs_peses }}</td>
+                            <td>{{ p.poids_moyen_oeuf }} g</td>
+                            <td><a href="{% url 'pesee_oeufs_detail' p.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune pesée pour le moment.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-argile">
             <div class="card-header"><i class="bi bi-droplet"></i> Dernières vaccinations — eau de boisson</div>
             <div class="card-body p-0">
                 <table class="table table-argile mb-0">
@@ -111,76 +181,6 @@
                         </tr>
                     {% empty %}
                         <tr><td colspan="4" class="text-center text-muted py-3">Aucune fiche pour le moment.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="card card-argile card-jaune">
-            <div class="card-header"><i class="bi bi-egg"></i> Dernières pesées d'œufs</div>
-            <div class="card-body p-0">
-                <table class="table table-argile mb-0">
-                    <thead><tr><th>Date</th><th>Œufs pesés</th><th>Poids moyen</th><th></th></tr></thead>
-                    <tbody>
-                    {% for p in dernieres_pesees_oeufs %}
-                        <tr>
-                            <td>{{ p.date|date:"d/m/Y" }}</td>
-                            <td>{{ p.nombre_oeufs_peses }}</td>
-                            <td>{{ p.poids_moyen_oeuf }} g</td>
-                            <td><a href="{% url 'pesee_oeufs_detail' p.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune pesée pour le moment.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="card card-argile">
-            <div class="card-header"><i class="bi bi-graph-up"></i> Dernières semaines de pesée</div>
-            <div class="card-body p-0">
-                <table class="table table-argile mb-0">
-                    <thead><tr><th>Semaine n°</th><th>Date</th><th>Poids moyen réel</th><th></th></tr></thead>
-                    <tbody>
-                    {% for s in dernieres_semaines_poids %}
-                        <tr>
-                            <td>{{ s.semaine_numero }}</td>
-                            <td>{{ s.date|date:"d/m/Y" }}</td>
-                            <td>{{ s.poids_moyen_reel|default:"—" }}{% if s.poids_moyen_reel %} g{% endif %}</td>
-                            <td><a href="{% url 'poids_semaine_detail' s.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-3">Aucune semaine pour le moment.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="card card-argile">
-            <div class="card-header" style="background-color:#219ebc;"><i class="bi bi-journal-text"></i> Derniers rapports journaliers</div>
-            <div class="card-body p-0">
-                <table class="table table-argile mb-0">
-                    <thead><tr><th>Date</th><th>Âge (j)</th><th>Mortalité</th><th>Effectif restant</th><th></th></tr></thead>
-                    <tbody>
-                    {% for r in derniers_rapports_journaliers %}
-                        <tr>
-                            <td>{{ r.date|date:"d/m/Y" }}</td>
-                            <td>{{ r.age_jour|default:"—" }}</td>
-                            <td>{{ r.mortalite_jour }}</td>
-                            <td>{{ r.effectif_restant }}</td>
-                            <td><a href="{% url 'rapport_journalier_detail' r.pk %}" class="btn btn-sm btn-outline-argile">Voir</a></td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-3">Aucun rapport pour le moment.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>

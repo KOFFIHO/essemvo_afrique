@@ -9,8 +9,10 @@
         <legend>En-tête de la semaine</legend>
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label">{{ form.semaine_numero.label }}</label>
-                {{ form.semaine_numero }}
+                <label class="form-label">Semaine n°</label>
+                <input type="text" class="form-control" disabled
+                       value="{% if form.instance.pk and form.instance.semaine_numero is not None %}{{ form.instance.semaine_numero }}{% else %}Calculé automatiquement{% endif %}">
+                <div class="form-text">Basé sur la date ci-contre et la date d'arrivée des sujets de l'exploitation.</div>
             </div>
             <div class="col-md-3">
                 <label class="form-label">{{ form.date.label }}</label>
