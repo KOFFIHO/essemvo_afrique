@@ -419,6 +419,13 @@ class PeseeQuotidienneOeufs(models.Model):
             return None
         return round(self.poids_total_grammes / self.nombre_oeufs_peses, 2)
 
+    @property
+    def age_jour(self):
+        """Âge en jours, calculé automatiquement depuis la date d'arrivée des sujets de l'exploitation."""
+        if not self.exploitation.date_arrivee_sujets:
+            return None
+        return (self.date - self.exploitation.date_arrivee_sujets.date()).days + 1
+
 
 class RapportJournalier(models.Model):
     """

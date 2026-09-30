@@ -101,9 +101,21 @@ SITE_BASELINE = "La Mémoire du Fermier — Plateforme de rapports d'élevage"
 # Ces 2 valeurs viennent de Google Cloud Console (identifiant OAuth "Application
 # Web") — voir le README pour la marche à suivre. Ne jamais commiter ces
 # secrets : passez-les en variables d'environnement en production.
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
-GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
-    "GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/drive/callback/"
-)
-SOCIETE = "ESSEMVO AFRIQUE — Bp 79 Man, Côte d'Ivoire — (+225) 07 47 56 97 05"
+
+
+#GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+#GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+#GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
+#    "GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/drive/callback/"
+#)
+#SOCIETE = "ESSEMVO AFRIQUE — Bp 79 Man, Côte d'Ivoire — (+225) 07 47 56 97 05"
+
+# Configuration SMTP pour Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'essemvo@gmail.com'
+# Utilisez un "Mot de passe d'application" généré par Google, PAS votre mot de passe habituel
+EMAIL_HOST_PASSWORD = 'votre_mot_de_passe_application' 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

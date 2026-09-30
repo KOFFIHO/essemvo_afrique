@@ -9,6 +9,29 @@
 {% url 'rapport_journalier_liste_imprimer' as url_imprimer %}
 {% url 'rapport_journalier_liste_pdf' as url_pdf %}
 {% include "rapports/_filtre_periode.html" %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-basket2 fs-2 text-success"></i>
+            <div class="stat-nombre">{{ total_aliments|default:"0"|floatformat:2 }}</div>
+            <div>Aliments consommés (kg)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-droplet fs-2 text-success"></i>
+            <div class="stat-nombre">{{ total_eau|default:"0"|floatformat:2 }}</div>
+            <div>Eau consommée (L)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-argile text-center p-3">
+            <i class="bi bi-egg fs-2 text-warning"></i>
+            <div class="stat-nombre">{{ total_oeufs|default:"0"|floatformat:1 }}</div>
+            <div>Plaquettes d'œufs pondus</div>
+        </div>
+    </div>
+</div>
 
 <div class="card card-argile">
     <div class="table-responsive">

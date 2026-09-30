@@ -7,6 +7,11 @@
     <div class="col-md-7">
         <form method="post" class="fieldset-argile">
             {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Âge des sujets</label>
+                <input type="text" class="form-control" disabled
+                    value="{% if form.instance.pk and form.instance.age_jour is not None %}{{ form.instance.age_jour }} jour(s){% else %}Calculé automatiquement{% endif %}">
+            </div>
             {% for field in form %}
             <div class="mb-3">
                 <label class="form-label">{{ field.label }}</label>

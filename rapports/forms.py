@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.utils import timezone
 
 from .models import (
     Exploitation,
@@ -175,10 +176,9 @@ PeseeIndividuelleFormSet = inlineformset_factory(
     can_delete=True,
 )
 
-
 class PeseeQuotidienneOeufsForm(BootstrapFormMixin, forms.ModelForm):
-    date = champ_date(label="Date")
-    heure_pesee = champ_heure(label="Heure de pesée")
+    date = champ_date(label="Date", initial=timezone.localdate)
+    heure_pesee = champ_heure(label="Heure de pesée", initial=lambda: timezone.localtime().time())
 
     class Meta:
         model = PeseeQuotidienneOeufs
@@ -191,6 +191,27 @@ class PeseeQuotidienneOeufsForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._bootstrapper()
 
+
+    def champ_date(label=None, required=True, initial=None, **kwargs):
+        return forms.DateField(
+            label=label,
+            required=required,
+            initial=initial,
+            input_formats=[FORMAT_DATE],
+            widget=forms.DateInput(attrs={"type": "date"}, format=FORMAT_DATE),
+            **kwargs,
+        )
+
+
+    def champ_heure(label=None, required=True, initial=None, **kwargs):
+        return forms.TimeField(
+            label=label,
+            required=required,
+            initial=initial,
+            input_formats=[FORMAT_HEURE],
+            widget=forms.TimeInput(attrs={"type": "time"}, format=FORMAT_HEURE),
+            **kwargs,
+        )
 
 class RapportJournalierForm(BootstrapFormMixin, forms.ModelForm):
     date = champ_date(label="Date")

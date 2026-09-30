@@ -884,10 +884,23 @@ def rapport_journalier_list(request):
         if exploitation else RapportJournalier.objects.none()
     )
     rapports = filtrer_par_periode(request, rapports)
+
+    syntheses = rapports.aggregate(
+        total_aliments=models.Sum("conso_aliments_kg"),
+        total_eau=models.Sum("conso_eau_litres"),
+        total_oeufs=models.Sum("production_oeufs_plaquettes"),
+    )
+
     return render(
         request,
         "rapports/rapport_journalier_list.html",
-        {"rapports": rapports, "exploitation": exploitation},
+        {
+            "rapports": rapports,
+            "exploitation": exploitation,
+            "total_aliments": syntheses["total_aliments"],
+            "total_eau": syntheses["total_eau"],
+            "total_oeufs": syntheses["total_oeufs"],
+        },
     )
 
 
